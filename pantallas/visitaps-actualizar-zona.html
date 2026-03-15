@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>VisitAPS – Actualizar zona</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0 auto;
+    background: #C8C4BC;
+    font-family: 'Montserrat', sans-serif;
+    display: flex;
+    justify-content: center;
+  }
+
+  .phone {
+    width: 100%;
+    max-width: 390px;
+    min-height: 100vh;
+    background: var(--cream);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  :root {
+    --navy:       #1B2A4A;
+    --navy-light: #243660;
+    --gold:       #C9A84C;
+    --gold-light: #D9BC72;
+    --cream:      #EDEAE4;
+    --cream-dark: #DDD9D2;
+    --text-main:  #2C2C2C;
+    --text-soft:  #7A7672;
+    --gray-btn:   #8A8580;
+    --steel:      #5A7290;
+    --steel-light:#6B84A3;
+  }
+
+  
+
+  
+
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%;
+    transform: translateX(-50%);
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(201,168,76,0.10) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .top-bar {
+    width: 100%; height: 4px;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 50%, var(--navy) 100%);
+    flex-shrink: 0; position: relative; z-index: 1;
+  }
+
+  .status-bar {
+    width: 100%;
+    padding: 10px 22px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative; z-index: 1;
+    flex-shrink: 0;
+  }
+  .status-bar .time { font-size: 12px; font-weight: 600; color: var(--navy); letter-spacing: 0.05em; }
+  .status-icons { display: flex; gap: 5px; align-items: center; }
+  .status-icons svg { fill: var(--navy); opacity: 0.65; }
+
+  .top-nav {
+    width: 100%;
+    padding: 14px 22px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative; z-index: 1;
+    flex-shrink: 0;
+  }
+  .btn-atras {
+    display: flex; align-items: center; gap: 5px;
+    background: none; border: none; cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 500;
+    color: var(--navy); opacity: 0.7; padding: 0;
+    transition: opacity 0.2s;
+  }
+  .btn-atras:hover { opacity: 1; }
+  .logo-top-right { width: 90px; display: flex; align-items: center; }
+  .logo-top-right svg { width: 100%; height: auto; }
+
+  /* Content */
+  .content {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 52px 36px;
+    position: relative; z-index: 1;
+  }
+
+  .page-title {
+    font-family: 'Lora', serif;
+    font-size: 22px; font-weight: 600;
+    color: var(--navy);
+    text-align: center;
+    margin-top: 22px;
+    line-height: 1.3;
+    animation: fadeDown 0.45s ease both;
+  }
+
+  .ornament {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; margin-top: 14px;
+    animation: fadeIn 0.5s 0.1s ease both;
+  }
+  .ornament-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+  }
+  .ornament-diamond {
+    width: 5px; height: 5px;
+    background: var(--gold);
+    transform: rotate(45deg); flex-shrink: 0;
+  }
+
+  /* Info block */
+  .info-block {
+    width: 100%;
+    margin-top: 22px;
+    animation: fadeIn 0.5s 0.15s ease both;
+  }
+  .info-question {
+    font-size: 13px; font-weight: 400;
+    color: var(--text-main);
+    line-height: 1.55;
+  }
+  .info-count {
+    margin-top: 10px;
+    font-size: 12.5px; font-weight: 400;
+    color: var(--text-soft);
+  }
+  .info-count strong {
+    font-weight: 700;
+    color: var(--navy);
+    font-size: 14px;
+  }
+
+  /* Memory chart section */
+  .memory-section {
+    width: 100%;
+    margin-top: 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: fadeIn 0.5s 0.2s ease both;
+  }
+
+  .memory-title {
+    font-family: 'Lora', serif;
+    font-size: 15px; font-weight: 600;
+    color: var(--text-main);
+    letter-spacing: 0.01em;
+    margin-bottom: 16px;
+  }
+
+  /* Donut/pie chart via SVG */
+  .chart-wrap {
+    position: relative;
+    width: 140px; height: 140px;
+  }
+  .chart-wrap svg { width: 100%; height: 100%; }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 14px;
+    width: 100%;
+  }
+  .legend-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .legend-row {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0;
+  }
+  .legend-label {
+    font-size: 12px; font-weight: 500;
+    color: var(--text-main);
+  }
+  .legend-pct {
+    font-size: 13px; font-weight: 700;
+    color: var(--navy);
+  }
+
+  /* Buttons */
+  .action-buttons {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 28px;
+    animation: fadeUp 0.5s 0.3s ease both;
+  }
+
+  .btn-action {
+    width: 100%;
+    padding: 15px 24px;
+    border: none; border-radius: 50px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  }
+  .btn-action.primary {
+    background: var(--navy);
+    color: #F0EDE8;
+    box-shadow: 0 4px 18px rgba(27,42,74,0.22);
+  }
+  .btn-action.primary:hover {
+    background: var(--navy-light);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 22px rgba(27,42,74,0.32);
+  }
+  .btn-action.muted {
+    background: var(--gray-btn);
+    color: #F0EDE8;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.10);
+  }
+  .btn-action.muted:hover {
+    background: #9A958F;
+    transform: translateY(-1px);
+  }
+  .btn-action:active { transform: translateY(0); }
+
+  .version-footer {
+    width: 100%;
+    border-top: 1px solid var(--cream-dark);
+    padding-top: 18px;
+    margin-top: 28px;
+    display: flex;
+    justify-content: center;
+    animation: fadeIn 0.5s 0.35s ease both;
+  }
+  .version {
+    font-size: 10px; font-weight: 300;
+    color: var(--text-soft); letter-spacing: 0.1em;
+  }
+
+  .version-footer {
+    width: 100%;
+    border-top: 1px solid var(--cream-dark);
+    padding-top: 18px;
+    display: flex;
+    justify-content: center;
+  }
+  .version {
+    font-size: 10px; font-weight: 300;
+    color: var(--text-soft); letter-spacing: 0.1em;
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="top-bar"></div>
+
+  <div class="status-bar">
+    <span class="time">9:41</span>
+    <div class="status-icons">
+      <svg width="15" height="11" viewBox="0 0 15 11"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4" y="5" width="3" height="6" rx="0.5"/><rect x="8" y="3" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="11" rx="0.5"/></svg>
+      <svg width="14" height="11" viewBox="0 0 14 11"><path d="M7 8.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/><path d="M3.5 6C4.8 4.7 6.3 4 7 4s2.2.7 3.5 2" stroke-width="1.2" stroke="currentColor" fill="none" stroke-linecap="round"/><path d="M1 3.5C2.9 1.6 4.9.5 7 .5s4.1 1.1 6 3" stroke-width="1.2" stroke="currentColor" fill="none" stroke-linecap="round"/></svg>
+      <svg width="22" height="11" viewBox="0 0 22 11"><rect x="0" y="1" width="19" height="9" rx="2" stroke="currentColor" stroke-width="1" fill="none"/><rect x="1" y="2" width="14" height="7" rx="1.5" fill="currentColor"/><path d="M20 3.5v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+  </div>
+
+  <div class="top-nav">
+    <button class="btn-atras">
+      <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
+        <path d="M6 1L1 6l5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Atras
+    </button>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.55">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="7.5" r="3.5" stroke="#1B2A4A" stroke-width="1.5"/>
+          <path d="M4 19.5c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.55">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M9 3H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M15 15l4-4-4-4M19 11H9" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <h1 class="page-title">Actualizar<br>información de la zona</h1>
+
+    <div class="ornament">
+      <div class="ornament-line"></div>
+      <div class="ornament-diamond"></div>
+      <div class="ornament-line"></div>
+    </div>
+
+    <div class="info-block">
+      <p class="info-question">¿Desea continuar con sus datos locales y prefiere bajar los datos de su zona de la nube?</p>
+      <p class="info-count">Cantidad de datos a descargar: <strong id="datos-count">16</strong></p>
+    </div>
+
+    <div class="memory-section">
+      <div class="memory-title">Espacio de memoria</div>
+
+      <div class="chart-wrap">
+        <svg id="pie-chart" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+          <!-- rendered by JS -->
+        </svg>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-row">
+            <div class="legend-dot" style="background: var(--navy);"></div>
+            <span class="legend-label">Disponible</span>
+          </div>
+          <span class="legend-pct" id="pct-disponible">99.991%</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-row">
+            <div class="legend-dot" style="background: var(--gold);"></div>
+            <span class="legend-label">Ocupado</span>
+          </div>
+          <span class="legend-pct" id="pct-ocupado">0.009%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn-action primary">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+          <path d="M8 17l4 4 4-4" stroke="#F0EDE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 12v9" stroke="#F0EDE8" stroke-width="2" stroke-linecap="round"/>
+          <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29" stroke="#F0EDE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Bajar datos de la zona
+      </button>
+      <button class="btn-action muted">
+        <!-- play icon -->
+        <svg width="12" height="14" viewBox="0 0 12 14" fill="none" style="flex-shrink:0">
+          <path d="M1 1l10 6-10 6V1z" fill="#F0EDE8" stroke="#F0EDE8" stroke-width="1.2" stroke-linejoin="round"/>
+        </svg>
+        Continuar
+      </button>
+    </div>
+
+    <div class="spacer" style="flex:1; min-height:20px;"></div>
+    <div class="version-footer">
+      <span class="version">Versión: v1.5.9</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ─── VARIABLES DE CONEXIÓN ──────────────────────────────────────────────────
+  // Para conectar a la base de datos, reemplazar estos valores con datos reales
+  const MEMORIA = {
+    totalBytes:      8_000_000_000,   // Total storage en bytes (8 GB ejemplo)
+    ocupadoBytes:    720_000,         // Bytes ocupados (datos locales)
+  };
+  const DATOS_A_DESCARGAR = 16;       // Número de registros pendientes de descarga
+  // ────────────────────────────────────────────────────────────────────────────
+
+  (function renderChart() {
+    const { totalBytes, ocupadoBytes } = MEMORIA;
+    const ocupadoPct  = ocupadoBytes / totalBytes;
+    const disponiblePct = 1 - ocupadoPct;
+
+    // Update text
+    document.getElementById('datos-count').textContent = DATOS_A_DESCARGAR;
+    document.getElementById('pct-disponible').textContent = (disponiblePct * 100).toFixed(3) + '%';
+    document.getElementById('pct-ocupado').textContent    = (ocupadoPct    * 100).toFixed(3) + '%';
+
+    // Draw SVG pie
+    const svg = document.getElementById('pie-chart');
+    const cx = 70, cy = 70, r = 60;
+
+    function polarToCartesian(angle) {
+      const rad = (angle - 90) * Math.PI / 180;
+      return {
+        x: cx + r * Math.cos(rad),
+        y: cy + r * Math.sin(rad)
+      };
+    }
+
+    function slicePath(startAngle, endAngle, color) {
+      const start = polarToCartesian(startAngle);
+      const end   = polarToCartesian(endAngle);
+      const large = (endAngle - startAngle) > 180 ? 1 : 0;
+      const path  = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', [
+        'M', cx, cy,
+        'L', start.x, start.y,
+        'A', r, r, 0, large, 1, end.x, end.y,
+        'Z'
+      ].join(' '));
+      path.setAttribute('fill', color);
+      return path;
+    }
+
+    // Slice 1: disponible (navy) — almost full circle
+    const disponibleDeg = disponiblePct * 360;
+    svg.appendChild(slicePath(0, disponibleDeg, '#1B2A4A'));
+
+    // Slice 2: ocupado (gold)
+    if (ocupadoPct > 0) {
+      svg.appendChild(slicePath(disponibleDeg, 360, '#C9A84C'));
+    }
+
+    // Thin separator line for clarity at boundary
+    const sep = polarToCartesian(0);
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', cx); line.setAttribute('y1', cy);
+    line.setAttribute('x2', sep.x); line.setAttribute('y2', sep.y);
+    line.setAttribute('stroke', '#EDEAE4'); line.setAttribute('stroke-width', '1.5');
+    svg.appendChild(line);
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>VisitAPS – Relevamiento</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0 auto;
+    background: #C8C4BC;
+    font-family: 'Montserrat', sans-serif;
+    display: flex;
+    justify-content: center;
+  }
+
+  .phone {
+    width: 100%;
+    max-width: 390px;
+    height: 100vh;
+    background: var(--cream);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  :root {
+    --navy:       #1B2A4A;
+    --navy-light: #243660;
+    --gold:       #C9A84C;
+    --gold-light: #D9BC72;
+    --cream:      #EDEAE4;
+    --cream-dark: #DDD9D2;
+    --text-main:  #2C2C2C;
+    --text-soft:  #7A7672;
+    --steel:      #5A7290;
+    --teal:       #50b7b2;
+  }
+
+  
+
+  
+
+  .top-bar {
+    width: 100%; height: 4px;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 50%, var(--navy) 100%);
+    flex-shrink: 0;
+  }
+  .status-bar {
+    width: 100%; padding: 10px 22px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+  }
+  .status-bar .time { font-size: 12px; font-weight: 600; color: var(--navy); letter-spacing: 0.05em; }
+  .status-icons { display: flex; gap: 5px; align-items: center; }
+  .status-icons svg { fill: var(--navy); opacity: 0.65; }
+
+  .top-nav {
+    width: 100%; padding: 14px 22px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+  }
+  .btn-atras {
+    display: flex; align-items: center; gap: 5px;
+    background: none; border: none; cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 500;
+    color: var(--navy); opacity: 0.7; padding: 0;
+    transition: opacity 0.2s;
+  }
+  .btn-atras:hover { opacity: 1; }
+
+  /* Scroll body */
+  .scroll-body {
+    flex: 1; width: 100%;
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    display: flex; flex-direction: column;
+    align-items: center;
+  }
+  .scroll-body::-webkit-scrollbar { display: none; }
+
+  /* Info matrix */
+  .info-matrix {
+    width: calc(100% - 104px);
+    margin: 16px 52px 0;
+    border: 1px solid var(--cream-dark);
+    border-radius: 4px;
+    overflow: hidden;
+    animation: fadeIn 0.4s ease both;
+  }
+  .matrix-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+  .matrix-row:last-child { border-bottom: none; }
+  .matrix-cell {
+    padding: 7px 10px;
+    border-right: 1px solid var(--cream-dark);
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .matrix-cell:last-child { border-right: none; }
+  .cell-label {
+    font-size: 9px; font-weight: 600;
+    color: var(--text-soft); letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .cell-value {
+    font-size: 10px; font-weight: 500;
+    color: var(--navy); line-height: 1.35;
+    word-break: break-word;
+    hyphens: none;
+    overflow-wrap: break-word;
+  }
+
+  /* Identi title */
+  .identi-section {
+    width: 100%; padding: 20px 52px 0;
+    display: flex; flex-direction: column; align-items: center;
+    animation: fadeDown 0.4s 0.05s ease both;
+  }
+  .identi-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-soft);
+  }
+  .identi-value {
+    font-family: 'Lora', serif;
+    font-size: 20px; font-weight: 600;
+    color: var(--text-main); text-align: center;
+    margin-top: 4px; line-height: 1.3;
+  }
+
+  /* Save button */
+  .btn-wrap {
+    width: 100%; padding: 18px 52px 0;
+    animation: fadeUp 0.4s 0.1s ease both;
+  }
+  .btn-guardar {
+    width: 100%; padding: 15px 24px;
+    border: none; border-radius: 50px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.03em;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: var(--navy); color: #F0EDE8;
+    box-shadow: 0 4px 18px rgba(27,42,74,0.22);
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  }
+  .btn-guardar:hover { background: var(--navy-light); transform: translateY(-1px); }
+  .btn-guardar:active { transform: translateY(0); }
+
+  /* Group selector */
+  .group-label {
+    font-family: 'Lora', serif;
+    font-size: 16px; font-weight: 600;
+    color: var(--text-main);
+    padding: 20px 52px 0;
+    width: 100%; text-align: center;
+    animation: fadeIn 0.4s 0.15s ease both;
+  }
+
+  /* Accordions */
+  .accordions {
+    width: 100%;
+    margin-top: 12px;
+    animation: fadeIn 0.4s 0.2s ease both;
+  }
+
+  .accordion {
+    overflow: hidden;
+    position: relative;
+  }
+  .accordion::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 52px; right: 52px;
+    height: 2px; background: var(--cream-dark);
+  }
+  .accordions { width: 100%; margin-top: 12px; animation: fadeIn 0.4s 0.2s ease both; }
+  .accordions::after {
+    content: '';
+    display: block;
+    margin: 0 52px;
+    height: 2px; background: var(--cream-dark);
+  }
+
+  .accordion-header {
+    width: 100%; padding: 15px 52px;
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer;
+    background: none; border: none;
+    font-family: 'Lora', serif;
+    font-size: 15px; font-weight: 600;
+    color: var(--navy);
+    text-align: left;
+    transition: background 0.15s;
+  }
+  .accordion-header:hover { background: rgba(27,42,74,0.04); }
+
+  .accordion-chevron {
+    transition: transform 0.25s ease;
+    flex-shrink: 0; opacity: 0.5;
+  }
+  .accordion.open > button .accordion-chevron { transform: rotate(180deg); }
+
+  .accordion-body {
+    height: 0; overflow: hidden;
+    transition: height 0.5s ease;
+    padding: 0;
+    font-size: 12px; font-weight: 400; color: var(--text-soft);
+  }
+  .accordion-placeholder {
+    padding: 12px 52px;
+    font-style: italic;
+    color: var(--cream-dark);
+    font-size: 11px;
+  }
+
+  /* ── Form fields inside accordion ─────────────────────── */
+  .form-section-title {
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--text-soft);
+    padding: 20px 52px 6px;
+    position: relative;
+  }
+  .form-section-title:not(:first-child) {
+    border-top: 1px solid var(--cream-dark);
+  }
+  .field-row {
+    padding: 12px 52px;
+    position: relative;
+    overflow: visible;
+  }
+  .field-row::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 52px; right: 52px;
+    height: 1px; background: var(--cream-dark);
+  }
+  .field-row:last-child::after { display: none; }
+  .field-row:has(+ .form-section-title)::after { display: none; }
+  .field-meta {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 8px; margin-bottom: 8px;
+  }
+  .field-labels { flex: 1; }
+  .field-code {
+    font-size: 9px; font-weight: 300; color: var(--text-soft);
+    letter-spacing: 0.04em; margin-bottom: 2px;
+  }
+  .field-label {
+    font-size: 12px; font-weight: 600; color: var(--navy); line-height: 1.35;
+  }
+  .btn-info {
+    width: 17px; height: 17px; border-radius: 50%;
+    background: var(--steel); opacity: 0.45;
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+    transition: opacity 0.2s;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px; font-weight: 700;
+  }
+  .btn-info:hover { opacity: 0.85; }
+
+  /* Text / tel input */
+  .field-input {
+    width: 100%; padding: 6px 2px;
+    border: none; border-bottom: 1px solid var(--cream-dark);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 400; color: var(--text-main);
+    outline: none; transition: border-color 0.2s;
+  }
+  .field-input[type="number"] { -moz-appearance: textfield; }
+  .field-input[type="number"]::-webkit-inner-spin-button,
+  .field-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .field-input:focus { border-color: var(--steel); }
+  .field-input::placeholder { color: var(--cream-dark); }
+
+
+  /* Date wrapper */
+  .date-wrap { position: relative; display: flex; align-items: center; }
+  .date-wrap .field-input { flex: 1; appearance: none; -webkit-appearance: none; }
+  .date-icon { position: absolute; right: 4px; pointer-events: none; opacity: 0.4; }
+
+  /* Custom dropdown */
+  .custom-dropdown { position: relative; width: 100%; }
+  .dropdown-trigger {
+    width: 100%; padding: 6px 24px 6px 2px;
+    border: none; border-bottom: 1px solid var(--cream-dark);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 400; color: var(--text-soft);
+    cursor: pointer; text-align: left;
+    display: flex; justify-content: space-between; align-items: center;
+    transition: border-color 0.2s;
+  }
+  .dropdown-trigger.has-value { color: var(--text-main); }
+  .dropdown-trigger.open { border-color: var(--steel); }
+  .dropdown-chevron { opacity: 0.45; transition: transform 0.2s; flex-shrink: 0; }
+  .dropdown-trigger.open .dropdown-chevron { transform: rotate(180deg); }
+
+  .dropdown-list {
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: var(--cream);
+    border: 1px solid var(--cream-dark);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    z-index: 50;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.2s ease;
+    box-shadow: 0 4px 12px rgba(27,42,74,0.10);
+  }
+  .dropdown-list.open { max-height: 200px; overflow-y: auto; }
+  .dropdown-list::-webkit-scrollbar { display: none; }
+
+  .dropdown-option {
+    padding: 10px 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 400; color: var(--navy);
+    cursor: pointer;
+    border-bottom: 1px solid var(--cream-dark);
+    transition: background 0.12s;
+  }
+  .dropdown-option:last-child { border-bottom: none; }
+  .dropdown-option:hover { background: rgba(201,168,76,0.08); }
+  .dropdown-option.selected { font-weight: 600; color: var(--navy); }
+
+  /* Dropdown portal — rendered at phone root, always on top */
+  #dd-portal {
+    position: absolute;
+    z-index: 600;
+    background: var(--cream);
+    border: 1px solid var(--cream-dark);
+    border-radius: 6px;
+    overflow-y: auto;
+    box-shadow: 0 4px 16px rgba(27,42,74,0.15);
+    display: none;
+  }
+  #dd-portal::-webkit-scrollbar { display: none; }
+  #dd-portal .dropdown-option {
+    padding: 10px 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 400; color: var(--navy);
+    cursor: pointer;
+    border-bottom: 1px solid var(--cream-dark);
+    transition: background 0.12s;
+  }
+  #dd-portal .dropdown-option:last-child { border-bottom: none; }
+  #dd-portal .dropdown-option:hover { background: rgba(201,168,76,0.08); }
+  #dd-portal .dropdown-option.selected { font-weight: 600; }
+  #dd-portal .ms-option {
+    padding: 10px 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 400; color: var(--navy);
+    cursor: pointer;
+    border-bottom: 1px solid var(--cream-dark);
+    display: flex; align-items: center; gap: 10px;
+    transition: background 0.12s;
+  }
+  #dd-portal .ms-option:hover { background: rgba(201,168,76,0.08); }
+  #dd-portal .ms-option.checked .ms-checkbox { background: var(--navy); border-color: var(--navy); }
+  #dd-portal .ms-done-btn {
+    width: calc(100% - 24px); margin: 8px 12px;
+    padding: 8px; border: none; border-radius: 50px;
+    background: var(--navy); color: #F0EDE8;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 600; cursor: pointer;
+  }
+
+  /* Multi-select checkboxes */
+  .multiselect-list { display: none; }
+  .multiselect-list::-webkit-scrollbar { display: none; }
+  .ms-option {
+    padding: 10px 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 400; color: var(--navy);
+    cursor: pointer;
+    border-bottom: 1px solid var(--cream-dark);
+    transition: background 0.12s;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .ms-option:last-child { border-bottom: none; }
+  .ms-option:hover { background: rgba(201,168,76,0.08); }
+  .ms-checkbox {
+    width: 14px; height: 14px; border-radius: 3px;
+    border: 1.5px solid var(--cream-dark);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: border-color 0.15s, background 0.15s;
+  }
+  .ms-option.checked .ms-checkbox {
+    background: var(--navy); border-color: var(--navy);
+  }
+  .ms-done-btn {
+    width: calc(100% - 24px); margin: 8px 12px;
+    padding: 8px; border: none; border-radius: 50px;
+    background: var(--navy); color: #F0EDE8;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Custom date picker */
+  .date-wrap { position: relative; }
+  .date-display {
+    width: 100%; padding: 6px 28px 6px 2px;
+    border: none; border-bottom: 1px solid var(--cream-dark);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 400; color: var(--text-main);
+    cursor: pointer; text-align: left;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: border-color 0.2s;
+  }
+  .date-display.open { border-color: var(--steel); }
+  .date-display .placeholder { color: var(--cream-dark); }
+  .date-icon { opacity: 0.4; flex-shrink: 0; }
+
+  .cal-popup {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--cream); border: 1px solid var(--cream-dark);
+    border-radius: 8px; z-index: 200;
+    box-shadow: 0 6px 20px rgba(27,42,74,0.14);
+    overflow: hidden;
+    display: none;
+  }
+  .cal-popup.open { display: block; }
+
+  .cal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px 8px;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+  .cal-month {
+    font-family: 'Lora', serif; font-size: 14px; font-weight: 600;
+    color: var(--navy); text-transform: capitalize;
+  }
+  .cal-nav {
+    background: none; border: none; cursor: pointer;
+    padding: 4px 6px; opacity: 0.5; transition: opacity 0.2s;
+    display: flex; align-items: center;
+  }
+  .cal-nav:hover { opacity: 1; }
+
+  .cal-weekdays {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    padding: 6px 10px 2px;
+  }
+  .cal-wd {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px; font-weight: 600; letter-spacing: 0.04em;
+    color: var(--text-soft); text-align: center; text-transform: uppercase;
+  }
+  .cal-days {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    padding: 2px 10px 10px; gap: 2px;
+  }
+  /* Year picker inside calendar */
+  .cal-year-btn {
+    background: none; border: none; cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 600;
+    color: var(--steel);
+    padding: 0 4px;
+    border-bottom: 1px dashed var(--steel);
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .cal-year-btn:hover { color: var(--navy); border-color: var(--navy); }
+
+  .cal-year-grid {
+    display: none;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    padding: 8px 10px 10px;
+    max-height: 160px;
+    overflow-y: auto;
+  }
+  .cal-year-grid.open { display: grid; }
+  .cal-year-grid::-webkit-scrollbar { display: none; }
+
+  .cal-year-opt {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 300;
+    color: var(--text-main);
+    text-align: center;
+    padding: 6px 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .cal-year-opt:hover { background: rgba(201,168,76,0.15); }
+  .cal-year-opt.selected {
+    background: var(--navy); color: #F0EDE8;
+    font-weight: 600; border-radius: 50%;
+  }
+  .cal-days-wrap { }
+  .cal-days-wrap.hidden { display: none; }
+  .cal-weekdays.hidden { display: none; }
+
+  .cal-day {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 300;
+    color: var(--text-main); text-align: center;
+    padding: 5px 2px; border-radius: 4px;
+    cursor: pointer; transition: background 0.12s;
+  }
+  .cal-day:hover { background: rgba(201,168,76,0.15); }
+  .cal-day.today { font-weight: 600; color: var(--navy); }
+  .cal-day.selected {
+    background: var(--navy); color: #F0EDE8;
+    font-weight: 600; border-radius: 50%;
+  }
+  .cal-day.empty { pointer-events: none; }
+  .cal-day.other-month { color: var(--cream-dark); pointer-events: none; }
+
+
+  /* Popup overlay */
+  .popup-overlay {
+    position: absolute; inset: 0;
+    background: rgba(27,42,74,0.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+    padding: 32px;
+  }
+  .popup-overlay.active { opacity: 1; pointer-events: all; }
+  .popup-card {
+    width: 100%; background: var(--cream);
+    border-radius: 12px; padding: 24px 24px 20px;
+    box-shadow: 0 8px 32px rgba(27,42,74,0.25);
+    transform: translateY(10px); transition: transform 0.2s;
+  }
+  .popup-overlay.active .popup-card { transform: translateY(0); }
+  .popup-code { font-size: 9px; font-weight: 300; color: var(--text-soft); letter-spacing: 0.04em; margin-bottom: 4px; }
+  .popup-title { font-family: 'Lora', serif; font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 12px; line-height: 1.35; }
+  .popup-desc { font-size: 11.5px; font-weight: 400; color: var(--text-soft); line-height: 1.6; }
+  .popup-close {
+    width: 100%; margin-top: 20px; padding: 12px;
+    border: none; border-radius: 50px;
+    background: var(--navy); color: #F0EDE8;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .popup-close:hover { background: var(--navy-light); }
+
+  /* FAB to top */
+  .fab-top {
+    position: absolute;
+    bottom: 24px; right: 24px;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--teal);
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(80,183,178,0.45);
+    transition: transform 0.15s, box-shadow 0.15s;
+    z-index: 10;
+  }
+  .fab-top:hover { transform: scale(1.07); box-shadow: 0 6px 20px rgba(80,183,178,0.55); }
+  .fab-top:active { transform: scale(0.97); }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="top-bar"></div>
+
+  <div class="status-bar">
+    <span class="time">9:41</span>
+    <div class="status-icons">
+      <svg width="15" height="11" viewBox="0 0 15 11"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4" y="5" width="3" height="6" rx="0.5"/><rect x="8" y="3" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="11" rx="0.5"/></svg>
+      <svg width="14" height="11" viewBox="0 0 14 11"><path d="M7 8.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/><path d="M3.5 6C4.8 4.7 6.3 4 7 4s2.2.7 3.5 2" stroke-width="1.2" stroke="currentColor" fill="none" stroke-linecap="round"/><path d="M1 3.5C2.9 1.6 4.9.5 7 .5s4.1 1.1 6 3" stroke-width="1.2" stroke="currentColor" fill="none" stroke-linecap="round"/></svg>
+      <svg width="22" height="11" viewBox="0 0 22 11"><rect x="0" y="1" width="19" height="9" rx="2" stroke="currentColor" stroke-width="1" fill="none"/><rect x="1" y="2" width="14" height="7" rx="1.5" fill="currentColor"/><path d="M20 3.5v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+  </div>
+
+  <div class="top-nav">
+    <button class="btn-atras">
+      <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
+        <path d="M6 1L1 6l5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Atras
+    </button>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.55">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="7.5" r="3.5" stroke="#1B2A4A" stroke-width="1.5"/>
+          <path d="M4 19.5c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.55">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M9 3H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M15 15l4-4-4-4M19 11H9" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-body">
+
+    <!-- Info matrix 3x3 -->
+    <div class="info-matrix">
+      <div class="matrix-row">
+        <div class="matrix-cell">
+          <span class="cell-label">CAPS</span>
+          <span class="cell-value" id="caps-val">36</span>
+        </div>
+        <div class="matrix-cell">
+          <span class="cell-label">Descripción</span>
+          <span class="cell-value" id="desc-val">VisitAPS 2026</span>
+        </div>
+        <div class="matrix-cell">
+          <span class="cell-label">Nombre</span>
+          <span class="cell-value" id="nom-val">VisitAPS 2026</span>
+        </div>
+      </div>
+      <div class="matrix-row">
+        <div class="matrix-cell">
+          <span class="cell-label">Id Ronda</span>
+          <span class="cell-value" id="idronda-val">36</span>
+        </div>
+        <div class="matrix-cell">
+          <span class="cell-label">Fecha Desde</span>
+          <span class="cell-value" id="fdesde-val">01/11/25</span>
+        </div>
+        <div class="matrix-cell">
+          <span class="cell-label">Fecha Hasta</span>
+          <span class="cell-value" id="fhasta-val">01/11/32</span>
+        </div>
+      </div>
+      <div class="matrix-row">
+        <div class="matrix-cell">
+          <span class="cell-label">Provincia</span>
+          <span class="cell-value" id="prov-val">—</span>
+        </div>
+        <div class="matrix-cell">
+          <span class="cell-label">Región</span>
+          <span class="cell-value" id="region-val">—</span>
+        </div>
+        <div class="matrix-cell">
+          <span class="cell-label">Localidad</span>
+          <span class="cell-value" id="loc-val">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Identi -->
+    <div class="identi-section">
+      <span class="identi-label">Identificación</span>
+      <div class="identi-value" id="identi-val">Prueba Rioja - test</div>
+    </div>
+
+    <!-- Completar y Guardar -->
+    <div class="btn-wrap">
+      <button class="btn-guardar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="#F0EDE8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="17,21 17,13 7,13 7,21" stroke="#F0EDE8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="7,3 7,8 15,8" stroke="#F0EDE8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Completar y Guardar
+      </button>
+    </div>
+
+    <!-- Group label -->
+    <div class="group-label">Seleccione un módulo:</div>
+
+
+    <!-- Accordions -->
+    <div class="accordions" id="accordions">
+      <div class="accordion" id="acc-visita">
+        <button class="accordion-header" onclick="toggleAcc('acc-visita')">
+          Visita
+          <svg class="accordion-chevron" width="12" height="8" viewBox="0 0 12 8" fill="none">
+            <path d="M1 1l5 5 5-5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="accordion-body">
+
+        <div class="form-section-title">Caracterización del tipo de visita</div>
+
+        <!-- 10090 Fecha de visita -->
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">01-001-10090</div>
+              <div class="field-label">Fecha de visita</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10090')">?</button>
+          </div>
+          <div class="date-wrap" id="datewrap-10090">
+            <div class="date-display" id="date-display-10090" onclick="toggleCal('10090')">
+              <span class="placeholder" id="date-text-10090">dd-mm-aaaa</span>
+              <svg class="date-icon" width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="4" width="18" height="18" rx="2" stroke="#1B2A4A" stroke-width="1.6"/>
+                <path d="M16 2v4M8 2v4M3 10h18" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="cal-popup" id="cal-10090">
+              <div class="cal-header">
+                <button class="cal-nav" onclick="calNav('10090',-1)">
+                  <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M6 1L1 6l5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <span class="cal-month" id="cal-month-10090"></span>
+                <button class="cal-nav" onclick="calNav('10090',1)">
+                  <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+              <div class="cal-weekdays">
+                <div class="cal-wd">Lu</div><div class="cal-wd">Ma</div><div class="cal-wd">Mi</div>
+                <div class="cal-wd">Ju</div><div class="cal-wd">Vi</div><div class="cal-wd">Sa</div><div class="cal-wd">Do</div>
+              </div>
+              <div class="cal-days" id="cal-days-10090"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10100 Tipo de visita -->
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">01-001-10100</div>
+              <div class="field-label">Tipo de visita</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10100')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10100">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10100')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10100">
+              <div class="dropdown-option" onclick="selectOption('10100','Censo')">Censo</div>
+              <div class="dropdown-option" onclick="selectOption('10100','Ronda')">Ronda</div>
+              <div class="dropdown-option" onclick="selectOption('10100','Campaña')">Campaña</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10120 Tipo de zona del lote -->
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">01-001-10120</div>
+              <div class="field-label">Tipo de zona del lote</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10120')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10120">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10120')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10120">
+              <div class="dropdown-option" onclick="selectOption('10120','Rural')">Rural</div>
+              <div class="dropdown-option" onclick="selectOption('10120','Urbana')">Urbana</div>
+              <div class="dropdown-option" onclick="selectOption('10120','Periurbana')">Periurbana</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10130 Dirección -->
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">01-001-10130</div>
+              <div class="field-label">Dirección, calle, manzana, pasillo, número</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10130')">?</button>
+          </div>
+          <input class="field-input" type="text" id="f10130" placeholder="Ingrese la dirección">
+        </div>
+
+        <!-- 10140 Manzana -->
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">01-001-10140</div>
+              <div class="field-label">Manzana y casa según mapa AS</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10140')">?</button>
+          </div>
+          <input class="field-input" type="text" id="f10140" placeholder="Ej: M12 C04">
+        </div>
+
+        <!-- 10150 Situación de la vivienda -->
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">01-001-10150</div>
+              <div class="field-label">Situación de la vivienda</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10150')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10150">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10150')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10150">
+              <div class="dropdown-option" onclick="selectOption('10150','Habitada')">Habitada</div>
+              <div class="dropdown-option" onclick="selectOption('10150','Deshabilitada')">Deshabilitada</div>
+              <div class="dropdown-option" onclick="selectOption('10150','Temporal')">Temporal</div>
+              <div class="dropdown-option" onclick="selectOption('10150','En construcción')">En construcción</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10160 Acceso a la vivienda -->
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">01-001-10160</div>
+              <div class="field-label">Acceso a la vivienda</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10160')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10160">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10160')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10160">
+              <div class="dropdown-option" onclick="selectOption('10160','Accedió')">Accedió</div>
+              <div class="dropdown-option" onclick="selectOption('10160','Ausente')">Ausente</div>
+              <div class="dropdown-option" onclick="selectOption('10160','Rechazo')">Rechazo</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10170 Teléfono 1 -->
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">01-001-10170</div>
+              <div class="field-label">Teléfono de contacto 1</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10170')">?</button>
+          </div>
+          <input class="field-input" type="tel" data-input-type="tel" id="f10170" placeholder="Ej: 011 4XXX-XXXX">
+        </div>
+
+        <!-- 10180 Teléfono 2 -->
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">01-001-10180</div>
+              <div class="field-label">Teléfono de contacto 2</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10180')">?</button>
+          </div>
+          <input class="field-input" type="tel" data-input-type="tel" id="f10180" placeholder="Ej: 011 4XXX-XXXX">
+        </div>
+
+        <!-- 10190 Teléfono -->
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">01-001-10190</div>
+              <div class="field-label">Teléfono de contacto</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10190')">?</button>
+          </div>
+          <input class="field-input" type="tel" data-input-type="tel" id="f10190" placeholder="Ej: 011 4XXX-XXXX">
+        </div>
+
+        </div>
+      </div>
+      <div class="accordion" id="acc-vivienda">
+        <button class="accordion-header" onclick="toggleAcc('acc-vivienda')">
+          Vivienda
+          <svg class="accordion-chevron" width="12" height="8" viewBox="0 0 12 8" fill="none">
+            <path d="M1 1l5 5 5-5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="accordion-body">
+
+        <div class="form-section-title">Situación de la vivienda</div>
+
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-010-10200</div>
+              <div class="field-label">Identificación de la vivienda</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10200')">?</button>
+          </div>
+          <input class="field-input" type="text" id="f10-010-10200" placeholder="Código o número de la vivienda">
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-010-10210</div>
+              <div class="field-label">Tipo de vivienda</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10210')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-010-10210">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-010-10210')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-010-10210">
+              <div class="dropdown-option" onclick="selectOption('10-010-10210','Casa A')">Casa A</div>
+              <div class="dropdown-option" onclick="selectOption('10-010-10210','Casa B')">Casa B</div>
+              <div class="dropdown-option" onclick="selectOption('10-010-10210','Casilla')">Casilla</div>
+              <div class="dropdown-option" onclick="selectOption('10-010-10210','Rancho')">Rancho</div>
+              <div class="dropdown-option" onclick="selectOption('10-010-10210','Departamento')">Departamento</div>
+              <div class="dropdown-option" onclick="selectOption('10-010-10210','Pieza en inquilinato')">Pieza en inquilinato</div>
+              <div class="dropdown-option" onclick="selectOption('10-010-10210','Pieza en hotel o pensión')">Pieza en hotel o pensión</div>
+              <div class="dropdown-option" onclick="selectOption('10-010-10210','Otro')">Otro</div>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-010-10220</div>
+              <div class="field-label">Cantidad de dormitorios en la vivienda</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10220')">?</button>
+          </div>
+          <input class="field-input" type="number" id="f10-010-10220" min="0" inputmode="numeric" placeholder="Ej: 2">
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-010-10240</div>
+              <div class="field-label">Cantidad de habitantes en la vivienda</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10240')">?</button>
+          </div>
+          <input class="field-input" type="number" id="f10-010-10240" min="0" inputmode="numeric" placeholder="Ej: 4">
+        </div>
+        <div class="form-section-title">Servicios de la vivienda</div>
+
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-020-10250</div>
+              <div class="field-label">¿Tiene luz eléctrica?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10250')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-020-10250">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-020-10250')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-020-10250">
+              <div class="dropdown-option" onclick="selectOption('10-020-10250','Sí')">Sí</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10250','No')">No</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10250','No sabe')">No sabe</div>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-020-10260</div>
+              <div class="field-label">Principal sistema para cocinar y/o calefaccionar el hogar</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10260')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-020-10260">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-020-10260')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-020-10260">
+              <div class="dropdown-option" onclick="selectOption('10-020-10260','Red de gas natural')">Red de gas natural</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10260','Gas en garrafa')">Gas en garrafa</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10260','Gas a granel (zeppelin) o en tubo')">Gas a granel (zeppelin) o en tubo</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10260','Electricidad')">Electricidad</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10260','Leña')">Leña</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10260','Kerosene')">Kerosene</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10260','Carbón')">Carbón</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10260','No posee')">No posee</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10260','Otros')">Otros</div>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-020-10270</div>
+              <div class="field-label">¿Dispone de red cloacal?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10270')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-020-10270">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-020-10270')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-020-10270">
+              <div class="dropdown-option" onclick="selectOption('10-020-10270','Sí, conectadas')">Sí, conectadas</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10270','Sí, sin conectar')">Sí, sin conectar</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10270','No')">No</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10270','No sabe')">No sabe</div>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-020-10280</div>
+              <div class="field-label">¿Dispone de agua de red pública (agua corriente)?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10280')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-020-10280">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-020-10280')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-020-10280">
+              <div class="dropdown-option" onclick="selectOption('10-020-10280','Sí')">Sí</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10280','No')">No</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10280','No sabe')">No sabe</div>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-020-10290</div>
+              <div class="field-label">Frecuencia de recolección de residuos</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10290')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-020-10290">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-020-10290')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-020-10290">
+              <div class="dropdown-option" onclick="selectOption('10-020-10290','6 o más veces por semana')">6 o más veces por semana</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10290','3 a 5 veces por semana')">3 a 5 veces por semana</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10290','Menos de 3 veces por semana')">Menos de 3 veces por semana</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10290','Sin recolección')">Sin recolección</div>
+              <div class="dropdown-option" onclick="selectOption('10-020-10290','No sabe')">No sabe</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-section-title">Situación socioeconómica</div>
+
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-030-10300</div>
+              <div class="field-label">Cantidad de personas de 10 años o más que no sepan leer y/o escribir</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10300')">?</button>
+          </div>
+          <input class="field-input" type="number" id="f10-030-10300" min="0" inputmode="numeric" placeholder="Ej: 0">
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-030-10310</div>
+              <div class="field-label">¿Hay al menos una persona mayor de 13 años con hasta primario incompleto?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10310')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-030-10310">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-030-10310')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-030-10310">
+              <div class="dropdown-option" onclick="selectOption('10-030-10310','Sí')">Sí</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10310','No')">No</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10310','No sabe')">No sabe</div>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-030-10320</div>
+              <div class="field-label">¿Hay al menos una persona mayor de 18 años con hasta secundario incompleto?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10320')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-030-10320">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-030-10320')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-030-10320">
+              <div class="dropdown-option" onclick="selectOption('10-030-10320','Sí')">Sí</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10320','No')">No</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10320','No sabe')">No sabe</div>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-030-10330</div>
+              <div class="field-label">Principal fuente de ingreso económico familiar</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10330')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-030-10330">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-030-10330')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-030-10330">
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','Trabajo formal')">Trabajo formal</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','Trabajo informal')">Trabajo informal</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','Ganancias')">Ganancias</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','Renta')">Renta</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','Beca')">Beca</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','Indemnización')">Indemnización</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','Jubilación')">Jubilación</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','Pensión')">Pensión</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','Beneficiario de plan social')">Beneficiario de plan social</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','Asignación universal por hijo')">Asignación universal por hijo</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','Prestación Alimentar')">Prestación Alimentar</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','Seguro de desempleo')">Seguro de desempleo</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','ART')">ART</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','Cuota alimentaria')">Cuota alimentaria</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10330','Manutención')">Manutención</div>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-030-10340</div>
+              <div class="field-label">¿Hay al menos una persona desocupada en la vivienda?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10340')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-030-10340">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-030-10340')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-030-10340">
+              <div class="dropdown-option" onclick="selectOption('10-030-10340','Sí')">Sí</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10340','No')">No</div>
+              <div class="dropdown-option" onclick="selectOption('10-030-10340','No sabe')">No sabe</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-section-title">Riesgos sanitarios</div>
+
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-040-10350</div>
+              <div class="field-label">¿Ha visto en la vivienda la presencia de...?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10350')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-040-10350">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-040-10350')">
+              <span class="dd-value" id="ms-display-10-040-10350">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="multiselect-list dropdown-list" id="dl-10-040-10350">
+              <div class="ms-option" onclick="toggleMs('10-040-10350',this,'Vinchucas')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Vinchucas</div>
+              <div class="ms-option" onclick="toggleMs('10-040-10350',this,'Roedores')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Roedores</div>
+              <div class="ms-option" onclick="toggleMs('10-040-10350',this,'Alacranes')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Alacranes</div>
+              <div class="ms-option" onclick="toggleMs('10-040-10350',this,'Serpientes')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Serpientes</div>
+              <div class="ms-option" onclick="toggleMs('10-040-10350',this,'Murciélagos')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Murciélagos</div>
+              <div class="ms-option" onclick="toggleMs('10-040-10350',this,'Otro')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Otro</div>
+              <div class="ms-option" onclick="toggleMs('10-040-10350',this,'Ninguno')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Ninguno</div>
+              <button class="ms-done-btn" onclick="closeMsDd('10-040-10350')">Confirmar</button>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-040-10360</div>
+              <div class="field-label">Presencia de reservorios de agua (dengue)</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10360')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-040-10360">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-040-10360')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-040-10360">
+              <div class="dropdown-option" onclick="selectOption('10-040-10360','Sí')">Sí</div>
+              <div class="dropdown-option" onclick="selectOption('10-040-10360','No')">No</div>
+              <div class="dropdown-option" onclick="selectOption('10-040-10360','No sabe')">No sabe</div>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-040-10370</div>
+              <div class="field-label">¿Se realizan acciones para evitar el crecimiento de larvas de mosquito?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10370')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-040-10370">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-040-10370')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-040-10370">
+              <div class="dropdown-option" onclick="selectOption('10-040-10370','Sí')">Sí</div>
+              <div class="dropdown-option" onclick="selectOption('10-040-10370','No')">No</div>
+              <div class="dropdown-option" onclick="selectOption('10-040-10370','No sabe')">No sabe</div>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-040-10380</div>
+              <div class="field-label">Actividades de vigilancia entomológica</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10380')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-040-10380">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-040-10380')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-040-10380">
+              <div class="dropdown-option" onclick="selectOption('10-040-10380','Sí')">Sí</div>
+              <div class="dropdown-option" onclick="selectOption('10-040-10380','No')">No</div>
+              <div class="dropdown-option" onclick="selectOption('10-040-10380','No sabe')">No sabe</div>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-040-10382</div>
+              <div class="field-label">Consejería en domicilio para prevención y control de Dengue</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10382')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-040-10382">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-040-10382')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-040-10382">
+              <div class="dropdown-option" onclick="selectOption('10-040-10382','Sí')">Sí</div>
+              <div class="dropdown-option" onclick="selectOption('10-040-10382','No')">No</div>
+              <div class="dropdown-option" onclick="selectOption('10-040-10382','No sabe')">No sabe</div>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-040-10410</div>
+              <div class="field-label">¿Cuántos perros hay en la vivienda?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10410')">?</button>
+          </div>
+          <input class="field-input" type="number" id="f10-040-10410" min="0" inputmode="numeric" placeholder="Ej: 0">
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-040-10420</div>
+              <div class="field-label">¿Cuántos perros fueron vacunados contra la rabia en el último año?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10420')">?</button>
+          </div>
+          <input class="field-input" type="number" id="f10-040-10420" min="0" inputmode="numeric" placeholder="Ej: 0">
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-040-10430</div>
+              <div class="field-label">¿Cuántos gatos hay en la vivienda?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10430')">?</button>
+          </div>
+          <input class="field-input" type="number" id="f10-040-10430" min="0" inputmode="numeric" placeholder="Ej: 0">
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-040-10440</div>
+              <div class="field-label">¿Cuántos gatos fueron vacunados contra la rabia en el último año?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10440')">?</button>
+          </div>
+          <input class="field-input" type="number" id="f10-040-10440" min="0" inputmode="numeric" placeholder="Ej: 0">
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">10-040-10450</div>
+              <div class="field-label">¿Existen animales domésticos o de cría sin control sanitario o vacunas?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('10450')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-10-040-10450">
+            <button class="dropdown-trigger" onclick="toggleDropdown('10-040-10450')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-10-040-10450">
+              <div class="dropdown-option" onclick="selectOption('10-040-10450','Sí')">Sí</div>
+              <div class="dropdown-option" onclick="selectOption('10-040-10450','No')">No</div>
+              <div class="dropdown-option" onclick="selectOption('10-040-10450','No sabe')">No sabe</div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+      <div class="accordion" id="acc-sistemas">
+        <button class="accordion-header" onclick="toggleAcc('acc-sistemas')">
+          Sistemas y Servicios de Salud
+          <svg class="accordion-chevron" width="12" height="8" viewBox="0 0 12 8" fill="none">
+            <path d="M1 1l5 5 5-5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="accordion-body">
+
+        <div class="form-section-title">Acceso a sistemas y servicios de salud</div>
+
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">20-050-10460</div>
+              <div class="field-label">¿Los integrantes de la vivienda recurren a su CAPS de referencia por consultas de salud?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('20-050-10460')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-20-050-10460">
+            <button class="dropdown-trigger" onclick="toggleDropdown('20-050-10460')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-20-050-10460">
+              <div class="dropdown-option" onclick="selectOption('20-050-10460','Sí')">Sí</div>
+              <div class="dropdown-option" onclick="selectOption('20-050-10460','No')">No</div>
+              <div class="dropdown-option" onclick="selectOption('20-050-10460','No sabe')">No sabe</div>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">20-050-10480</div>
+              <div class="field-label">¿A dónde se refieren los integrantes cuando tienen un problema de salud?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('20-050-10480')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-20-050-10480">
+            <button class="dropdown-trigger" onclick="toggleDropdown('20-050-10480')">
+              <span class="dd-value" id="ms-display-20-050-10480">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="multiselect-list dropdown-list" id="dl-20-050-10480">
+              <div class="ms-option" onclick="toggleMs('20-050-10480',this,'A mi agente sanitario')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>A mi agente sanitario</div>
+              <div class="ms-option" onclick="toggleMs('20-050-10480',this,'Al centro de salud de mi área')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Al centro de salud de mi área</div>
+              <div class="ms-option" onclick="toggleMs('20-050-10480',this,'Al hospital de la zona')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Al hospital de la zona</div>
+              <div class="ms-option" onclick="toggleMs('20-050-10480',this,'A un centro de salud de otra área')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>A un centro de salud de otra área</div>
+              <div class="ms-option" onclick="toggleMs('20-050-10480',this,'Al sector privado')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Al sector privado</div>
+              <button class="ms-done-btn" onclick="closeMsDd('20-050-10480')">Confirmar</button>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">20-050-10490</div>
+              <div class="field-label">Si necesita tratamiento médico, ¿cómo accede a los medicamentos?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('20-050-10490')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-20-050-10490">
+            <button class="dropdown-trigger" onclick="toggleDropdown('20-050-10490')">
+              <span class="dd-value" id="ms-display-20-050-10490">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="multiselect-list dropdown-list" id="dl-20-050-10490">
+              <div class="ms-option" onclick="toggleMs('20-050-10490',this,'Se los brinda el centro de salud en forma gratuita')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Se los brinda el centro de salud en forma gratuita</div>
+              <div class="ms-option" onclick="toggleMs('20-050-10490',this,'Los compra sin descuento')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Los compra sin descuento</div>
+              <div class="ms-option" onclick="toggleMs('20-050-10490',this,'Los compra con descuento por su cobertura')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Los compra con descuento por su cobertura</div>
+              <div class="ms-option" onclick="toggleMs('20-050-10490',this,'Los compra informalmente')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Los compra informalmente</div>
+              <div class="ms-option" onclick="toggleMs('20-050-10490',this,'Se los cede un familiar/vecino')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Se los cede un familiar/vecino</div>
+              <div class="ms-option" onclick="toggleMs('20-050-10490',this,'No los puede comprar')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>No los puede comprar</div>
+              <div class="ms-option" onclick="toggleMs('20-050-10490',this,'No sabe')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>No sabe</div>
+              <button class="ms-done-btn" onclick="closeMsDd('20-050-10490')">Confirmar</button>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">20-050-10500</div>
+              <div class="field-label">Si se atiende en el subsistema público, ¿cómo obtiene un turno médico?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('20-050-10500')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-20-050-10500">
+            <button class="dropdown-trigger" onclick="toggleDropdown('20-050-10500')">
+              <span class="dd-value" id="ms-display-20-050-10500">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="multiselect-list dropdown-list" id="dl-20-050-10500">
+              <div class="ms-option" onclick="toggleMs('20-050-10500',this,'Por medio del Agente Sanitario')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Por medio del Agente Sanitario</div>
+              <div class="ms-option" onclick="toggleMs('20-050-10500',this,'Por vía telefónica')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Por vía telefónica</div>
+              <div class="ms-option" onclick="toggleMs('20-050-10500',this,'Vía WhatsApp')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Vía WhatsApp</div>
+              <div class="ms-option" onclick="toggleMs('20-050-10500',this,'De manera presencial en el centro de salud')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>De manera presencial en el centro de salud</div>
+              <div class="ms-option" onclick="toggleMs('20-050-10500',this,'Vía web')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Vía web</div>
+              <button class="ms-done-btn" onclick="closeMsDd('20-050-10500')">Confirmar</button>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-meta">
+            <div class="field-labels">
+              <div class="field-code">20-050-11500</div>
+              <div class="field-label">¿Qué demora suelen tener los turnos que solicitan los integrantes de la vivienda?</div>
+            </div>
+            <button class="btn-info" onclick="openPopup('20-050-11500')">?</button>
+          </div>
+          <div class="custom-dropdown" id="dd-20-050-11500">
+            <button class="dropdown-trigger" onclick="toggleDropdown('20-050-11500')">
+              <span class="dd-value">Selecciona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-list" id="dl-20-050-11500">
+              <div class="dropdown-option" onclick="selectOption('20-050-11500','Menos de 1 mes')">Menos de 1 mes</div>
+              <div class="dropdown-option" onclick="selectOption('20-050-11500','Entre 1 y 2 meses')">Entre 1 y 2 meses</div>
+              <div class="dropdown-option" onclick="selectOption('20-050-11500','Más de 2 meses')">Más de 2 meses</div>
+              <div class="dropdown-option" onclick="selectOption('20-050-11500','No sabe')">No sabe</div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+      <div class="accordion" id="acc-paciente">
+        <button class="accordion-header" onclick="toggleAcc('acc-paciente')">
+          Paciente
+          <svg class="accordion-chevron" width="12" height="8" viewBox="0 0 12 8" fill="none">
+            <path d="M1 1l5 5 5-5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="accordion-body">
+
+        <!-- Agregar paciente button -->
+        <div style="padding: 16px 52px 8px;">
+          <button onclick="agregarPaciente()" style="
+            width:100%; padding:14px 24px;
+            border:none; border-radius:50px;
+            background: var(--steel);
+            color: #F0EDE8;
+            font-family:'Montserrat',sans-serif;
+            font-size:13px; font-weight:600;
+            letter-spacing:0.03em;
+            cursor:pointer;
+            display:flex; align-items:center; justify-content:center; gap:10px;
+            box-shadow: 0 4px 14px rgba(90,114,144,0.30);
+            transition: background 0.2s, transform 0.15s;
+          " onmouseover="this.style.background='#6B84A3'" onmouseout="this.style.background='var(--steel)'">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="#F0EDE8" stroke-width="1.5"/>
+              <path d="M8 5v6M5 8h6" stroke="#F0EDE8" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            Agregar paciente
+          </button>
+        </div>
+        <!-- Paciente sub-accordions container -->
+        <div id="pacientes-container" style="width:100%;"></div>
+
+        </div>
+      </div>
+    </div>
+
+
+
+  </div><!-- end scroll-body -->
+  <div id="dd-portal"></div>
+
+  <button class="fab-top" onclick="document.querySelector('.scroll-body').scrollTo({top:0,behavior:'smooth'})">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M9 14V4M4 9l5-5 5 5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+
+  <!-- Info popup overlay -->
+  <div class="popup-overlay" id="popup-overlay" onclick="handleOverlayClick(event)">
+    <div class="popup-card" id="popup-card">
+      <div class="popup-code" id="popup-code"></div>
+      <div class="popup-title" id="popup-title"></div>
+      <div class="popup-desc" id="popup-desc"></div>
+      <button class="popup-close" onclick="closePopup()">Cerrar</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── VARIABLES DE CONEXIÓN ────────────────────────────────────────────────────
+var RELEVAMIENTO = {
+  caps:       "36",
+  descripcion:"VisitAPS 2026",
+  nombre:     "VisitAPS 2026",
+  idRonda:    "36",
+  fechaDesde: "01/11/25",
+  fechaHasta: "01/11/32",
+  provincia:  "La Rioja",
+  region:     "1",
+  localidad:  "RIOJA_LC1",
+  identi:     "Prueba Rioja - test"
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
+document.getElementById("caps-val").textContent    = RELEVAMIENTO.caps;
+document.getElementById("desc-val").textContent    = RELEVAMIENTO.descripcion;
+document.getElementById("nom-val").textContent     = RELEVAMIENTO.nombre;
+document.getElementById("idronda-val").textContent = RELEVAMIENTO.idRonda;
+document.getElementById("fdesde-val").textContent  = RELEVAMIENTO.fechaDesde;
+document.getElementById("fhasta-val").textContent  = RELEVAMIENTO.fechaHasta;
+document.getElementById("prov-val").textContent    = RELEVAMIENTO.provincia;
+document.getElementById("region-val").textContent  = RELEVAMIENTO.region;
+document.getElementById("loc-val").textContent     = RELEVAMIENTO.localidad;
+document.getElementById("identi-val").textContent  = RELEVAMIENTO.identi;
+
+function setAccHeight(body, open) {
+  if (open) {
+    body.style.height = body.scrollHeight + "px";
+    // after transition ends allow overflow for dropdowns
+    body.addEventListener("transitionend", function onEnd() {
+      if (body.style.height !== "0px") {
+        body.style.height = "auto";
+        body.style.overflow = "visible";
+      }
+      body.removeEventListener("transitionend", onEnd);
+    });
+  } else {
+    // snap from auto to px first so transition works
+    body.style.height = body.scrollHeight + "px";
+    body.style.overflow = "hidden";
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        body.style.height = "0px";
+      });
+    });
+  }
+}
+
+function toggleAcc(id) {
+  var acc   = document.getElementById(id);
+  var body  = acc.querySelector(".accordion-body");
+  var isPacienteSub = id.startsWith("acc-paciente-") && id !== "acc-paciente";
+  var isOpen = acc.classList.contains("open");
+
+  if (isPacienteSub) {
+    // Only close siblings within pacientes-container
+    var container = document.getElementById("pacientes-container");
+    var siblings  = container.querySelectorAll(".accordion");
+    siblings.forEach(function(s) {
+      if (s !== acc && s.classList.contains("open")) {
+        s.classList.remove("open");
+        setAccHeight(s.querySelector(".accordion-body"), false);
+      }
+    });
+  } else {
+    // Close all top-level accordions
+    var all = document.querySelectorAll("#accordions > .accordion");
+    all.forEach(function(a) {
+      if (a !== acc && a.classList.contains("open")) {
+        a.classList.remove("open");
+        setAccHeight(a.querySelector(".accordion-body"), false);
+      }
+    });
+  }
+
+  if (!isOpen) {
+    acc.classList.add("open");
+    setAccHeight(body, true);
+  } else {
+    acc.classList.remove("open");
+    setAccHeight(body, false);
+  }
+}
+
+// ── Custom datepicker ─────────────────────────────────────────────
+var MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+var calState = {};
+
+function initCal(id) {
+  var now = new Date();
+  calState[id] = { year: now.getFullYear(), month: now.getMonth(), selected: null };
+  renderCal(id);
+}
+
+function toggleCal(id) {
+  if (!calState[id]) initCal(id);
+  var popup = document.getElementById("cal-" + id);
+  var display = document.getElementById("date-display-" + id);
+  var isOpen = popup.classList.contains("open");
+  // close all cals
+  document.querySelectorAll(".cal-popup").forEach(function(c) { c.classList.remove("open"); });
+  document.querySelectorAll(".date-display").forEach(function(d) { d.classList.remove("open"); });
+  if (!isOpen) { popup.classList.add("open"); display.classList.add("open"); }
+}
+
+function calNav(id, dir) {
+  calState[id].month += dir;
+  if (calState[id].month > 11) { calState[id].month = 0; calState[id].year++; }
+  if (calState[id].month < 0)  { calState[id].month = 11; calState[id].year--; }
+  renderCal(id);
+}
+
+function renderCal(id) {
+  var st = calState[id];
+  var header = document.getElementById("cal-month-" + id);
+  // Split into month label + clickable year
+  header.innerHTML =
+    '<span style="font-family:Lora,serif;font-size:14px;font-weight:600;color:var(--navy);">' +
+    MESES[st.month] + '</span>' +
+    ' <button class="cal-year-btn" onclick="toggleYearPicker(\'' + id + '\',event)">' +
+    st.year + '</button>';
+
+  var grid = document.getElementById("cal-days-" + id);
+  grid.innerHTML = "";
+
+  var first = new Date(st.year, st.month, 1);
+  var lastDay = new Date(st.year, st.month + 1, 0).getDate();
+  var startDow = (first.getDay() + 6) % 7;
+  var today = new Date();
+
+  for (var i = 0; i < startDow; i++) {
+    var emp = document.createElement("div");
+    emp.className = "cal-day empty";
+    grid.appendChild(emp);
+  }
+  for (var d = 1; d <= lastDay; d++) {
+    var cell = document.createElement("div");
+    cell.className = "cal-day";
+    cell.textContent = d;
+    var cls = [];
+    if (d === today.getDate() && st.month === today.getMonth() && st.year === today.getFullYear()) cls.push("today");
+    if (st.selected && d === st.selected.d && st.month === st.selected.m && st.year === st.selected.y) cls.push("selected");
+    if (cls.length) cell.className += " " + cls.join(" ");
+    (function(day){ cell.onclick = function(e) { e.stopPropagation(); pickDate(id, day); }; })(d);
+    grid.appendChild(cell);
+  }
+}
+
+function toggleYearPicker(id, e) {
+  e.stopPropagation();
+  var popup = document.getElementById("cal-" + id);
+  var existing = popup.querySelector(".cal-year-grid");
+  var weekdays = popup.querySelector(".cal-weekdays");
+  var days = popup.querySelector(".cal-days");
+
+  if (existing) {
+    // close year picker
+    existing.remove();
+    weekdays.classList.remove("hidden");
+    days.classList.remove("hidden");
+    return;
+  }
+
+  // hide days, show year grid
+  weekdays.classList.add("hidden");
+  days.classList.add("hidden");
+
+  var grid = document.createElement("div");
+  grid.className = "cal-year-grid open";
+
+  var currentYear = new Date().getFullYear();
+  var st = calState[id];
+  for (var y = currentYear; y >= 1920; y--) {
+    var opt = document.createElement("div");
+    opt.className = "cal-year-opt" + (y === st.year ? " selected" : "");
+    opt.textContent = y;
+    (function(year) {
+      opt.onclick = function(e) {
+        e.stopPropagation();
+        calState[id].year = year;
+        // close year picker
+        grid.remove();
+        weekdays.classList.remove("hidden");
+        days.classList.remove("hidden");
+        renderCal(id);
+        // scroll selected year into view
+      };
+    })(y);
+    grid.appendChild(opt);
+  }
+
+  popup.appendChild(grid);
+  // Scroll to selected year
+  setTimeout(function() {
+    var sel = grid.querySelector(".selected");
+    if (sel) sel.scrollIntoView({ block: "center" });
+  }, 50);
+}
+
+function pickDate(id, day) {
+  var st = calState[id];
+  st.selected = { d: day, m: st.month, y: st.year };
+  var dd = String(day).padStart(2,"0");
+  var mm = String(st.month + 1).padStart(2,"0");
+  var yyyy = st.year;
+  var txt = document.getElementById("date-text-" + id);
+  txt.textContent = dd + "-" + mm + "-" + yyyy;
+  txt.classList.remove("placeholder");
+  renderCal(id);
+  document.getElementById("cal-" + id).classList.remove("open");
+  document.getElementById("date-display-" + id).classList.remove("open");
+}
+
+// init all cals on load
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelectorAll(".cal-popup").forEach(function(el) {
+    var id = el.id.replace("cal-","");
+    initCal(id);
+  });
+});
+
+// close cals on outside click
+document.addEventListener("click", function(e) {
+  if (!e.target.closest(".date-wrap")) {
+    document.querySelectorAll(".cal-popup").forEach(function(c) { c.classList.remove("open"); });
+    document.querySelectorAll(".date-display").forEach(function(d) { d.classList.remove("open"); });
+  }
+});
+
+var FIELD_INFO = {
+  "10090": { label: "Fecha de visita", desc: "Registre la fecha en que se realizó la visita al domicilio del relevamiento." },
+  "10100": { label: "Tipo de visita", desc: "Indique la modalidad: Censo (relevamiento poblacional), Ronda (visita periódica) o Campaña (acción sanitaria específica)." },
+  "10120": { label: "Tipo de zona del lote", desc: "Clasifique la zona: Rural (campo abierto), Urbana (ciudad consolidada) o Periurbana (zona de transición)." },
+  "10130": { label: "Dirección completa", desc: "Ingrese la dirección completa del domicilio visitado: calle, número, manzana o pasillo según corresponda." },
+  "10140": { label: "Manzana y casa según mapa AS", desc: "Identifique la manzana y número de casa de acuerdo al mapa del Agente Sanitario de su zona." },
+  "10150": { label: "Situación de la vivienda", desc: "Estado actual: Habitada, Deshabilitada (cerrada permanentemente), Temporal (uso estacional) o En construcción." },
+  "10160": { label: "Acceso a la vivienda", desc: "Accedió: se completó la visita. Ausente: nadie en el domicilio. Rechazo: los ocupantes no permitieron el acceso." },
+  "10170": { label: "Teléfono de contacto 1", desc: "Número de teléfono principal del domicilio o del responsable del hogar." },
+  "10180": { label: "Teléfono de contacto 2", desc: "Número de teléfono alternativo o segundo contacto del grupo familiar." },
+  "10190": { label: "Teléfono de contacto", desc: "Número de teléfono adicional para contacto del relevamiento." }
+};
+
+function openPopup(code) {
+  var info = FIELD_INFO[code];
+  if (!info) return;
+  document.getElementById("popup-code").textContent = "01-001-" + code;
+  document.getElementById("popup-title").textContent = info.label;
+  document.getElementById("popup-desc").textContent = info.desc;
+  document.getElementById("popup-overlay").classList.add("active");
+}
+
+function toggleMs(code, el, val) {
+  el.classList.toggle('checked');
+  var chk = el.querySelector('svg');
+  chk.style.display = el.classList.contains('checked') ? 'block' : 'none';
+  updateMsDisplay(code);
+}
+function updateMsDisplay(code) {
+  var selected = [];
+  document.querySelectorAll('#dl-' + code + ' .ms-option.checked').forEach(function(o) {
+    var txt = o.textContent.replace('Confirmar','').trim();
+    if (txt) selected.push(txt);
+  });
+  var disp = document.getElementById('ms-display-' + code);
+  disp.textContent = selected.length ? selected.join(', ') : 'Selecciona';
+  if (selected.length) disp.classList.add('has-value');
+  else disp.classList.remove('has-value');
+}
+function closeMsDd(code) {
+  var list = document.getElementById('dl-' + code);
+  var trigger = document.querySelector('#dd-' + code + ' .dropdown-trigger');
+  list.classList.remove('open');
+  trigger.classList.remove('open');
+}
+
+
+
+function closePopup() {
+  document.getElementById("popup-overlay").classList.remove("active");
+}
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById("popup-overlay")) closePopup();
+}
+
+var openDD = null;
+var portal = null;
+
+function getPortal() {
+  if (!portal) portal = document.getElementById("dd-portal");
+  return portal;
+}
+
+window.closePortal = closePortal;
+function closePortal() {
+  var p = getPortal();
+  p.style.display = "none";
+  p.style.top = "auto";
+  p.style.bottom = "auto";
+  p.innerHTML = "";
+  if (openDD) {
+    var t = document.querySelector("#dd-" + openDD + " .dropdown-trigger");
+    if (t) t.classList.remove("open");
+  }
+  openDD = null;
+}
+
+function positionPortal(trigger) {
+  var p = getPortal();
+  var phone = document.querySelector(".phone");
+  var phoneRect = phone.getBoundingClientRect();
+  var trigRect  = trigger.getBoundingClientRect();
+  var maxH = 200;
+  var spaceBelow = phoneRect.bottom - trigRect.bottom - 8;
+  var spaceAbove = trigRect.top - phoneRect.top - 8;
+  p.style.width = trigRect.width + "px";
+  p.style.left  = (trigRect.left - phoneRect.left) + "px";
+  p.style.maxHeight = Math.min(maxH, Math.max(spaceBelow, spaceAbove)) + "px";
+  if (spaceBelow >= Math.min(maxH, spaceBelow) || spaceBelow >= spaceAbove) {
+    // open downward
+    p.style.top    = (trigRect.bottom - phoneRect.top + 2) + "px";
+    p.style.bottom = "auto";
+  } else {
+    // flip upward
+    p.style.bottom = (phoneRect.bottom - trigRect.top + 2) + "px";
+    p.style.top    = "auto";
+  }
+  p.style.display = "block";
+}
+
+function toggleDropdown(id) {
+  var trigger = document.querySelector("#dd-" + id + " .dropdown-trigger");
+  var isOpen = (openDD === id);
+  closePortal();
+  if (isOpen) return;
+
+  var srcList = document.getElementById("dl-" + id);
+  var p = getPortal();
+
+  // Clone list items into portal
+  var items = srcList.querySelectorAll(".dropdown-option, .ms-option");
+  items.forEach(function(item) {
+    p.appendChild(item.cloneNode(true));
+  });
+
+  // Re-wire click handlers and mark selected
+  var currentVal = trigger.querySelector(".dd-value").textContent;
+  p.querySelectorAll(".dropdown-option").forEach(function(o) {
+    var val = o.textContent;
+    if (val === currentVal) o.classList.add("selected");
+    o.onclick = function() { selectOption(id, val); };
+  });
+
+  // ms-option handling
+  p.querySelectorAll(".ms-option").forEach(function(o) {
+    var origOpt = srcList.querySelector(".ms-option:not(.cloned)");
+    // restore checked state from source
+    var label = o.textContent.trim();
+    var srcOpts = srcList.querySelectorAll(".ms-option");
+    srcOpts.forEach(function(s) {
+      if (s.textContent.trim() === label && s.classList.contains("checked")) {
+        o.classList.add("checked");
+        var chk = o.querySelector("svg"); if (chk) chk.style.display = "block";
+      }
+    });
+    o.onclick = function(e) { e.stopPropagation(); toggleMsPortal(id, o, label); };
+  });
+
+  // Add confirm button for multiselects
+  if (srcList.querySelector(".ms-option")) {
+    var p2 = getPortal();
+    p2.style.maxHeight = "240px";
+    var btn = document.createElement("button");
+    btn.className = "ms-done-btn";
+    btn.textContent = "Confirmar";
+    btn.onclick = function() { syncMsFromPortal(id); closePortal(); };
+    p.appendChild(btn);
+  }
+
+  positionPortal(trigger);
+  trigger.classList.add("open");
+  openDD = id;
+}
+
+function selectOption(id, value) {
+  var trigger = document.querySelector("#dd-" + id + " .dropdown-trigger");
+  trigger.querySelector(".dd-value").textContent = value;
+  trigger.classList.add("has-value");
+  // update source list selected state
+  var srcList = document.getElementById("dl-" + id);
+  srcList.querySelectorAll(".dropdown-option").forEach(function(o) {
+    o.classList.toggle("selected", o.textContent === value);
+  });
+  closePortal();
+}
+
+function toggleMsPortal(id, el, val) {
+  el.classList.toggle("checked");
+  var svg = el.querySelector("svg"); if (svg) svg.style.display = el.classList.contains("checked") ? "block" : "none";
+}
+
+function syncMsFromPortal(id) {
+  var p = getPortal();
+  var srcList = document.getElementById("dl-" + id);
+  var selected = [];
+  p.querySelectorAll(".ms-option").forEach(function(po) {
+    var label = po.textContent.trim();
+    var srcOpt = null;
+    srcList.querySelectorAll(".ms-option").forEach(function(s) { if (s.textContent.trim() === label) srcOpt = s; });
+    if (po.classList.contains("checked")) {
+      selected.push(label);
+      if (srcOpt) { srcOpt.classList.add("checked"); var sv = srcOpt.querySelector("svg"); if (sv) sv.style.display = "block"; }
+    } else {
+      if (srcOpt) { srcOpt.classList.remove("checked"); var sv = srcOpt.querySelector("svg"); if (sv) sv.style.display = "none"; }
+    }
+  });
+  var trigger = document.querySelector("#dd-" + id + " .dropdown-trigger");
+  var disp = trigger.querySelector(".dd-value");
+  disp.textContent = selected.length ? selected.join(", ") : "Selecciona";
+  if (selected.length) trigger.classList.add("has-value");
+  else trigger.classList.remove("has-value");
+}
+
+document.addEventListener("keydown", function(e) {
+  if (e.target.type === "number" && ["e","E","+","-"].includes(e.key)) {
+    e.preventDefault();
+  }
+  if (e.target.dataset.inputType === "tel") {
+    var allowed = ["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"];
+    if (allowed.includes(e.key)) return;
+    if (!/^[0-9\- ]$/.test(e.key)) e.preventDefault();
+  }
+});
+
+document.addEventListener("click", function(e) {
+  if (!e.target.closest(".custom-dropdown") && !e.target.closest("#dd-portal")) {
+    closePortal();
+  }
+});
+function closeMsDd(id) { closePortal(); }
+
+var pacienteCount = 0;
+var pacienteFieldsTemplate = '\n        <div class="form-section-title">Datos filiatorios</div>\n\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10510</div>\n              <div class="field-label">Apellido</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10510\')">?</button>\n          </div>\n          <input class="field-input" type="text" id="f30-101-10510" placeholder="Ingrese el apellido">\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10520</div>\n              <div class="field-label">Nombre</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10520\')">?</button>\n          </div>\n          <input class="field-input" type="text" id="f30-101-10520" placeholder="Ingrese el nombre">\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10530</div>\n              <div class="field-label">Fecha de nacimiento</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10530\')">?</button>\n          </div>\n          <div class="date-wrap" id="datewrap-30-101-10530-PACNUM">\n            <div class="date-display" id="date-display-30-101-10530-PACNUM" onclick="toggleCal(\'30-101-10530-PACNUM\')">\n              <span class="placeholder" id="date-text-30-101-10530-PACNUM">dd-mm-aaaa</span>\n              <svg class="date-icon" width="14" height="14" viewBox="0 0 24 24" fill="none">\n                <rect x="3" y="4" width="18" height="18" rx="2" stroke="#1B2A4A" stroke-width="1.6"/>\n                <path d="M16 2v4M8 2v4M3 10h18" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round"/>\n              </svg>\n            </div>\n            <div class="cal-popup" id="cal-30-101-10530-PACNUM">\n              <div class="cal-header">\n                <button class="cal-nav" onclick="calNav(\'30-101-10530-PACNUM\',-1)">\n                  <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M6 1L1 6l5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>\n                </button>\n                <span class="cal-month" id="cal-month-30-101-10530-PACNUM"></span>\n                <button class="cal-nav" onclick="calNav(\'30-101-10530-PACNUM\',1)">\n                  <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>\n                </button>\n              </div>\n              <div class="cal-weekdays">\n                <div class="cal-wd">Lu</div><div class="cal-wd">Ma</div><div class="cal-wd">Mi</div>\n                <div class="cal-wd">Ju</div><div class="cal-wd">Vi</div><div class="cal-wd">Sa</div><div class="cal-wd">Do</div>\n              </div>\n              <div class="cal-days" id="cal-days-30-101-10530-PACNUM"></div>\n            </div>\n          </div>\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10550</div>\n              <div class="field-label">Sexo</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10550\')">?</button>\n          </div>\n          <div class="custom-dropdown" id="dd-30-101-10550-PACNUM">\n            <button class="dropdown-trigger" onclick="toggleDropdown(\'30-101-10550-PACNUM\')">\n              <span class="dd-value">Selecciona</span>\n              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\n            </button>\n            <div class="dropdown-list" id="dl-30-101-10550-PACNUM">\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10550\',\'Masculino\')">Masculino</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10550\',\'Femenino\')">Femenino</div>\n            </div>\n          </div>\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10560</div>\n              <div class="field-label">DNI</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10560\')">?</button>\n          </div>\n          <input class="field-input" type="number" id="f30-101-10560" placeholder="Ej: 12345678" min="0" inputmode="numeric">\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10570</div>\n              <div class="field-label">Situación de la persona en la vivienda</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10570\')">?</button>\n          </div>\n          <div class="custom-dropdown" id="dd-30-101-10570-PACNUM">\n            <button class="dropdown-trigger" onclick="toggleDropdown(\'30-101-10570-PACNUM\')">\n              <span class="dd-value">Selecciona</span>\n              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\n            </button>\n            <div class="dropdown-list" id="dl-30-101-10570-PACNUM">\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10570\',\'Ocupante\')">Ocupante</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10570\',\'Visitante\')">Visitante</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10570\',\'Falleció\')">Falleció</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10570\',\'Se mudó\')">Se mudó</div>\n            </div>\n          </div>\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10580</div>\n              <div class="field-label">Contacto telefónico</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10580\')">?</button>\n          </div>\n          <input class="field-input" type="number" id="f30-101-10580" placeholder="Ej: 3804123456" min="0" inputmode="numeric">\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10590</div>\n              <div class="field-label">Contacto mail</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10590\')">?</button>\n          </div>\n          <input class="field-input" type="text" id="f30-101-10590" placeholder="ejemplo@mail.com">\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10600</div>\n              <div class="field-label">País de nacimiento</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10600\')">?</button>\n          </div>\n          <div class="custom-dropdown" id="dd-30-101-10600-PACNUM">\n            <button class="dropdown-trigger" onclick="toggleDropdown(\'30-101-10600-PACNUM\')">\n              <span class="dd-value">Selecciona</span>\n              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\n            </button>\n            <div class="dropdown-list" id="dl-30-101-10600-PACNUM">\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10600\',\'Argentina\')">Argentina</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10600\',\'Otro\')">Otro</div>\n            </div>\n          </div>\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10610</div>\n              <div class="field-label">Pueblos Originarios</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10610\')">?</button>\n          </div>\n          <div class="custom-dropdown" id="dd-30-101-10610-PACNUM">\n            <button class="dropdown-trigger" onclick="toggleDropdown(\'30-101-10610-PACNUM\')">\n              <span class="dd-value">Selecciona</span>\n              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\n            </button>\n            <div class="dropdown-list" id="dl-30-101-10610-PACNUM">\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'No pertenece\')">No pertenece</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Aonikenk\')">Aonikenk</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Atacama\')">Atacama</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Avipón\')">Avipón</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Aymara\')">Aymara</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Chana\')">Chana</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Chané\')">Chané</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Charrúa\')">Charrúa</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Chicha\')">Chicha</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Chorote\')">Chorote</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Chulupí/Nivaclé\')">Chulupí/Nivaclé</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Churumata\')">Churumata</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Comechingón\')">Comechingón</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Corundí\')">Corundí</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Diaguita\')">Diaguita</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Diaguita Calchaqu\')">Diaguita Calchaqu</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Fiscara\')">Fiscara</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Guaraní\')">Guaraní</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Guarayo\')">Guarayo</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Guaycuru\')">Guaycuru</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Gúnún a Kúna\')">Gúnún a Kúna</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Haush/Maneken\')">Haush/Maneken</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Huarpe\')">Huarpe</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Iogys\')">Iogys</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Juijui\')">Juijui</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Kolla\')">Kolla</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Kolla Atacameño\')">Kolla Atacameño</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Lule\')">Lule</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Lule Vilela\')">Lule Vilela</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Maká\')">Maká</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Mapuche\')">Mapuche</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Mapuche Tehuelche\')">Mapuche Tehuelche</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Mbya Guaraní\')">Mbya Guaraní</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Minuán\')">Minuán</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Moqoit/Mocoví\')">Moqoit/Mocoví</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Ocloya\')">Ocloya</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Omaguaca\')">Omaguaca</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Pilagá\')">Pilagá</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Qom/Toba\')">Qom/Toba</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Quechua\')">Quechua</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Querandí\')">Querandí</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Ranquel\')">Ranquel</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Sanavirón\')">Sanavirón</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Selknam/Ona\')">Selknam/Ona</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Tapiete\')">Tapiete</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Tastil\')">Tastil</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Tehuelche\')">Tehuelche</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Toara\')">Toara</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Tonokoté\')">Tonokoté</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Vilela\')">Vilela</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Wayteca/Chono\')">Wayteca/Chono</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Weenhayek\')">Weenhayek</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Wichi\')">Wichi</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Yagán\')">Yagán</div>\n            </div>\n          </div>\n        </div>\n        <div class="form-section-title" style="border-top:none;padding-top:8px;">\n          <button onclick="confirmarEliminarPaciente(PACNUM_PLACEHOLDER)" style="\n            width:100%; padding:11px 24px;\n            border:none; border-radius:50px;\n            background: var(--gold);\n            color: var(--navy);\n            font-family:\'Montserrat\',sans-serif;\n            font-size:12px; font-weight:600;\n            letter-spacing:0.03em;\n            cursor:pointer;\n            display:flex; align-items:center; justify-content:center; gap:8px;\n            box-shadow: 0 3px 10px rgba(201,168,76,0.25);\n            transition: background 0.2s;\n            margin-top:8px;\n          " onmouseover="this.style.background=\'var(--gold-light)\'" onmouseout="this.style.background=\'var(--gold)\'">\n            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">\n              <polyline points="3 6 5 6 21 6" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>\n              <path d="M19 6l-1 14H6L5 6" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>\n              <path d="M10 11v6M14 11v6" stroke="var(--navy)" stroke-width="2" stroke-linecap="round"/>\n              <path d="M9 6V4h6v2" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>\n            </svg>\n            Eliminar paciente\n          </button>\n        </div>\n';
+
+function agregarPaciente() {
+  pacienteCount++;
+  var n = pacienteCount;
+  var container = document.getElementById("pacientes-container");
+  var acc = document.createElement("div");
+  acc.className = "accordion";
+  acc.id = "acc-paciente-" + n;
+  acc.style.position = "relative";
+
+  var header = document.createElement("button");
+  header.className = "accordion-header";
+  header.style.padding = "13px 52px";
+  header.innerHTML = "Paciente Nro: " + n +
+    '<svg class="accordion-chevron" width="12" height="8" viewBox="0 0 12 8" fill="none">' +
+    '<path d="M1 1l5 5 5-5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var accId = "acc-paciente-" + n;
+  header.onclick = function() { toggleAcc(accId); };
+
+  var body = document.createElement("div");
+  body.className = "accordion-body";
+  body.id = "body-paciente-" + n;
+  // Replace PACNUM_PLACEHOLDER and -PACNUM suffix with actual n
+  var fields = pacienteFieldsTemplate
+    .replace(/PACNUM_PLACEHOLDER/g, n)
+    .replace(/-PACNUM/g, "-p" + n);
+  body.innerHTML = fields;
+
+  acc.appendChild(header);
+  acc.appendChild(body);
+  container.appendChild(acc);
+
+  // Init calendars inside new paciente
+  body.querySelectorAll(".cal-popup").forEach(function(el) {
+    initCal(el.id.replace("cal-",""));
+  });
+
+  setTimeout(function() { acc.scrollIntoView({ behavior: "smooth", block: "start" }); }, 100);
+}
+
+function confirmarEliminarPaciente(n) {
+  var overlay = document.getElementById("popup-overlay");
+  document.getElementById("popup-code").textContent = "";
+  document.getElementById("popup-title").textContent = "¿Estás seguro?";
+  document.getElementById("popup-desc").textContent =
+    "¿Deseas eliminar el Paciente Nro. " + n + "? Esta acción no se puede deshacer.";
+
+  // Replace close button with confirm + cancel
+  var card = document.getElementById("popup-card");
+  var oldBtn = card.querySelector(".popup-close");
+  oldBtn.style.display = "none";
+
+  var existing = card.querySelector(".del-confirm-btns");
+  if (existing) existing.remove();
+
+  var btns = document.createElement("div");
+  btns.className = "del-confirm-btns";
+  btns.style.cssText = "display:flex;gap:10px;margin-top:20px;";
+
+  var btnCancel = document.createElement("button");
+  btnCancel.className = "popup-close";
+  btnCancel.style.cssText = "flex:1;background:var(--cream-dark);color:var(--navy);";
+  btnCancel.textContent = "Cancelar";
+  btnCancel.onclick = function() {
+    oldBtn.style.display = "";
+    btns.remove();
+    closePopup();
+  };
+
+  var btnDel = document.createElement("button");
+  btnDel.className = "popup-close";
+  btnDel.style.cssText = "flex:1;background:var(--gold);color:var(--navy);";
+  btnDel.textContent = "Eliminar";
+  btnDel.onclick = function() {
+    var acc = document.getElementById("acc-paciente-" + n);
+    if (acc) acc.remove();
+    oldBtn.style.display = "";
+    btns.remove();
+    closePopup();
+  };
+
+  btns.appendChild(btnCancel);
+  btns.appendChild(btnDel);
+  card.appendChild(btns);
+  overlay.classList.add("active");
+}
+</script>
+
+</body>
+</html>

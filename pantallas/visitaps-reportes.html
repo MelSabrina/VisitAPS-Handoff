@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>VisitAPS – Reportes</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:       #1B2A4A;
+    --navy-light: #243660;
+    --gold:       #C9A84C;
+    --gold-light: #D9BC72;
+    --cream:      #EDEAE4;
+    --cream-dark: #DDD9D2;
+    --text-main:  #2C2C2C;
+    --text-soft:  #7A7672;
+    --steel:      #5A7290;
+    --steel-light:#6B84A3;
+    --teal:       #50b7b2;
+  }
+
+  html, body {
+    width: 100%; min-height: 100vh;
+    margin: 0 auto;
+    background: #C8C4BC;
+    font-family: 'Montserrat', sans-serif;
+    display: flex; justify-content: center;
+  }
+
+  .phone {
+    width: 100%; max-width: 390px;
+    height: 100vh;
+    background: var(--cream);
+    display: flex; flex-direction: column;
+    align-items: center;
+    position: relative; overflow: hidden;
+  }
+
+  .top-bar {
+    width: 100%; height: 4px;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 50%, var(--navy) 100%);
+    flex-shrink: 0;
+  }
+
+  .status-bar {
+    width: 100%; padding: 10px 22px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+  }
+  .status-bar .time { font-size: 12px; font-weight: 600; color: var(--navy); letter-spacing: 0.05em; }
+  .status-icons { display: flex; gap: 5px; align-items: center; }
+  .status-icons svg { fill: var(--navy); opacity: 0.65; }
+
+  .top-nav {
+    width: 100%; padding: 14px 22px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+  }
+  .btn-atras {
+    display: flex; align-items: center; gap: 5px;
+    background: none; border: none; cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 500;
+    color: var(--navy); opacity: 0.7; padding: 0;
+    transition: opacity 0.2s;
+  }
+  .btn-atras:hover { opacity: 1; }
+
+  /* Scroll body */
+  .scroll-body {
+    flex: 1; width: 100%;
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 32px;
+  }
+  .scroll-body::-webkit-scrollbar { display: none; }
+
+  /* Header */
+  .page-header {
+    width: 100%; padding: 20px 52px 0;
+    display: flex; flex-direction: column; align-items: center;
+    animation: fadeDown 0.4s ease both;
+  }
+  .page-title {
+    font-family: 'Lora', serif;
+    font-size: 24px; font-weight: 600;
+    color: var(--text-main); text-align: center;
+  }
+  .ornament {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; margin-top: 14px;
+  }
+  .ornament-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+  }
+  .ornament-diamond {
+    width: 5px; height: 5px; background: var(--gold);
+    transform: rotate(45deg); flex-shrink: 0;
+  }
+
+  /* Filter fields */
+  .filters {
+    width: 100%;
+    padding: 18px 0 0;
+    animation: fadeIn 0.4s 0.1s ease both;
+  }
+
+  .filter-row {
+    padding: 10px 52px;
+    position: relative;
+  }
+  .filter-row::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 52px; right: 52px;
+    height: 1px; background: var(--cream-dark);
+  }
+  .filter-row:last-child::after { display: none; }
+
+  .filter-label {
+    font-size: 10px; font-weight: 600;
+    color: var(--text-soft); letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+
+  /* Read-only value (account type: agente) */
+  .filter-value-readonly {
+    font-size: 13px; font-weight: 400;
+    color: var(--text-soft);
+    padding: 5px 0 4px;
+  }
+
+  /* Editable dropdown (admin accounts) */
+  .custom-dropdown { position: relative; width: 100%; }
+  .dropdown-trigger {
+    width: 100%; padding: 5px 24px 4px 0;
+    border: none; border-bottom: 1px solid var(--cream-dark);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 500; color: var(--navy);
+    cursor: pointer; text-align: left;
+    display: flex; justify-content: space-between; align-items: center;
+    transition: border-color 0.2s;
+  }
+  .dropdown-trigger.has-placeholder { color: var(--text-soft); font-weight: 400; }
+  .dropdown-trigger.open { border-color: var(--steel); }
+  .dropdown-chevron { opacity: 0.45; transition: transform 0.2s; flex-shrink: 0; }
+  .dropdown-trigger.open .dropdown-chevron { transform: rotate(180deg); }
+
+  /* Date fields */
+  .date-wrap { position: relative; display: flex; align-items: center; }
+  .date-display {
+    width: 100%; padding: 5px 28px 4px 0;
+    border: none; border-bottom: 1px solid var(--cream-dark);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 500; color: var(--navy);
+    cursor: pointer; text-align: left;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: border-color 0.2s;
+  }
+  .date-display.has-value { color: var(--navy); font-weight: 600; }
+  .date-display.open { border-color: var(--steel); }
+  .date-icon { opacity: 0.4; flex-shrink: 0; }
+
+  /* Calendar popup */
+  .cal-popup {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    top: auto;
+    left: 0; right: 0;
+    background: var(--cream); border: 1px solid var(--cream-dark);
+    border-radius: 8px; z-index: 200;
+    box-shadow: 0 -4px 20px rgba(27,42,74,0.12);
+    display: none;
+  }
+  .cal-popup.open { display: block; }
+  .cal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px 8px; border-bottom: 1px solid var(--cream-dark);
+  }
+  .cal-month { font-family: 'Lora', serif; font-size: 13px; font-weight: 600; color: var(--navy); }
+  .cal-year-btn {
+    background: none; border: none; cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 600; color: var(--steel);
+    padding: 0 3px; border-bottom: 1px dashed var(--steel);
+  }
+  .cal-nav {
+    background: none; border: none; cursor: pointer;
+    padding: 3px 5px; opacity: 0.5; transition: opacity 0.2s;
+    display: flex; align-items: center;
+  }
+  .cal-nav:hover { opacity: 1; }
+  .cal-weekdays {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    padding: 5px 10px 2px;
+  }
+  .cal-wd {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px; font-weight: 600; letter-spacing: 0.04em;
+    color: var(--text-soft); text-align: center; text-transform: uppercase;
+  }
+  .cal-days {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    padding: 2px 10px 10px; gap: 2px;
+  }
+  .cal-day {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 300; color: var(--text-main);
+    text-align: center; padding: 5px 2px; border-radius: 4px;
+    cursor: pointer; transition: background 0.12s;
+  }
+  .cal-day:hover { background: rgba(201,168,76,0.15); }
+  .cal-day.today { font-weight: 600; color: var(--navy); }
+  .cal-day.selected { background: var(--navy); color: #F0EDE8; font-weight: 600; border-radius: 50%; }
+  .cal-day.empty { pointer-events: none; }
+  .cal-year-grid {
+    display: none; grid-template-columns: repeat(4, 1fr);
+    gap: 2px; padding: 8px 10px 10px;
+    max-height: 150px; overflow-y: auto;
+  }
+  .cal-year-grid.open { display: grid; }
+  .cal-year-grid::-webkit-scrollbar { display: none; }
+  .cal-year-opt {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 300; color: var(--text-main);
+    text-align: center; padding: 5px 2px; border-radius: 4px; cursor: pointer;
+    transition: background 0.12s;
+  }
+  .cal-year-opt:hover { background: rgba(201,168,76,0.15); }
+  .cal-year-opt.selected { background: var(--navy); color: #F0EDE8; font-weight: 600; border-radius: 50%; }
+
+  /* Action buttons */
+  .action-section {
+    width: 100%; padding: 22px 52px 0;
+    display: flex; flex-direction: column; gap: 12px;
+    animation: fadeUp 0.4s 0.2s ease both;
+  }
+
+  .btn-generar {
+    width: 100%; padding: 15px;
+    border: none; border-radius: 50px;
+    background: var(--navy); color: #F0EDE8;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.03em;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    box-shadow: 0 4px 18px rgba(27,42,74,0.22);
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-generar:hover { background: var(--navy-light); transform: translateY(-1px); }
+  .btn-generar:active { transform: translateY(0); }
+
+  .export-row {
+    display: flex; gap: 10px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .export-row.visible { opacity: 1; pointer-events: all; }
+
+  .btn-export {
+    flex: 1; padding: 12px 8px;
+    border: none; border-radius: 50px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-export:active { transform: scale(0.98); }
+
+  .btn-export-completo {
+    background: var(--teal); color: #fff;
+    box-shadow: 0 4px 14px rgba(80,183,178,0.30);
+  }
+  .btn-export-completo:hover { background: #3fa8a3; }
+
+  .btn-export-modulos {
+    background: var(--steel); color: #F0EDE8;
+    box-shadow: 0 4px 14px rgba(90,114,144,0.25);
+  }
+  .btn-export-modulos:hover { background: var(--steel-light); }
+
+  /* Results section */
+  .results-section {
+    width: 100%; padding: 0 52px;
+    display: none;
+    margin-top: 22px;
+    position: relative;
+    animation: fadeIn 0.4s ease both;
+  }
+  .results-section.visible { display: block; }
+  .results-section::before,
+  .results-section::after {
+    content: "";
+    display: block;
+    height: 1px;
+    background: var(--cream-dark);
+    margin: 0;
+  }
+  .results-section::before { margin-bottom: 22px; }
+  .results-section::after  { margin-top: 14px; }
+
+  .results-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600;
+    color: var(--text-main); margin-bottom: 12px;
+    letter-spacing: 0.01em;
+  }
+
+  .stat-block { margin-bottom: 14px; }
+  .stat-total {
+    font-size: 11.5px; font-weight: 400; color: var(--text-soft);
+    margin-bottom: 8px;
+  }
+  .stat-total strong { font-weight: 700; color: var(--navy); font-size: 13px; }
+
+  .stat-group-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text-soft);
+    margin-bottom: 6px;
+  }
+
+  .stat-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--cream-dark);
+    font-size: 12px;
+  }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-row-label { font-weight: 400; color: var(--text-main); }
+  .stat-row-val { font-weight: 700; color: var(--navy); }
+
+  /* Preview table */
+  .preview-section {
+    width: 100%; padding: 18px 0 0;
+    display: none;
+    margin-top: 4px;
+  }
+  .preview-section.visible { display: block; }
+
+  .preview-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600;
+    color: var(--text-main); letter-spacing: 0.01em;
+    padding: 0 52px; margin-bottom: 10px;
+  }
+
+  .table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 52px;
+    width: calc(100% - 104px);
+    border-radius: 6px;
+    border: 1px solid var(--cream-dark);
+    cursor: grab;
+  }
+  .table-scroll:active { cursor: grabbing; }
+  .table-scroll::-webkit-scrollbar { height: 4px; }
+  .table-scroll::-webkit-scrollbar-track { background: var(--cream-dark); }
+  .table-scroll::-webkit-scrollbar-thumb { background: var(--steel); border-radius: 2px; }
+
+  table {
+    border-collapse: collapse;
+    min-width: 800px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+  }
+  th {
+    background: var(--navy); color: #F0EDE8;
+    padding: 8px 10px; text-align: left;
+    font-weight: 600; letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  td {
+    padding: 7px 10px; color: var(--text-main);
+    border-bottom: 1px solid var(--cream-dark);
+    white-space: nowrap; max-width: 160px;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  tr:nth-child(even) td { background: rgba(221,217,210,0.35); }
+
+  /* Portal for dropdowns */
+  #dd-portal {
+    position: absolute; z-index: 600;
+    background: var(--cream);
+    border: 1px solid var(--cream-dark);
+    border-radius: 6px;
+    overflow-y: auto;
+    box-shadow: 0 4px 16px rgba(27,42,74,0.15);
+    display: none;
+  }
+  #dd-portal::-webkit-scrollbar { display: none; }
+  #dd-portal .dropdown-option {
+    padding: 10px 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 400; color: var(--navy);
+    cursor: pointer; border-bottom: 1px solid var(--cream-dark);
+    transition: background 0.12s;
+  }
+  #dd-portal .dropdown-option:last-child { border-bottom: none; }
+  #dd-portal .dropdown-option:hover { background: rgba(201,168,76,0.08); }
+  #dd-portal .dropdown-option.selected { font-weight: 600; }
+
+  /* Error popup */
+  .popup-overlay {
+    position: absolute; inset: 0;
+    background: rgba(27,42,74,0.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 300; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s; padding: 32px;
+  }
+  .popup-overlay.active { opacity: 1; pointer-events: all; }
+  .popup-card {
+    width: 100%; background: var(--cream);
+    border-radius: 12px; padding: 24px 24px 20px;
+    box-shadow: 0 8px 32px rgba(27,42,74,0.25);
+    transform: translateY(10px); transition: transform 0.2s;
+  }
+  .popup-overlay.active .popup-card { transform: translateY(0); }
+  .popup-title {
+    font-family: 'Lora', serif;
+    font-size: 15px; font-weight: 600;
+    color: var(--navy); margin-bottom: 10px;
+  }
+  .popup-msg {
+    font-size: 12px; font-weight: 400;
+    color: var(--text-soft); line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  .popup-btn {
+    width: 100%; padding: 12px;
+    border: none; border-radius: 50px;
+    background: var(--navy); color: #F0EDE8;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .popup-btn:hover { background: var(--navy-light); }
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="top-bar"></div>
+
+  <div class="status-bar">
+    <span class="time">9:41</span>
+    <div class="status-icons">
+      <svg width="15" height="11" viewBox="0 0 15 11"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4" y="5" width="3" height="6" rx="0.5"/><rect x="8" y="3" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="11" rx="0.5"/></svg>
+      <svg width="14" height="11" viewBox="0 0 14 11"><path d="M7 8.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/><path d="M3.5 6C4.8 4.7 6.3 4 7 4s2.2.7 3.5 2" stroke-width="1.2" stroke="currentColor" fill="none" stroke-linecap="round"/><path d="M1 3.5C2.9 1.6 4.9.5 7 .5s4.1 1.1 6 3" stroke-width="1.2" stroke="currentColor" fill="none" stroke-linecap="round"/></svg>
+      <svg width="22" height="11" viewBox="0 0 22 11"><rect x="0" y="1" width="19" height="9" rx="2" stroke="currentColor" stroke-width="1" fill="none"/><rect x="1" y="2" width="14" height="7" rx="1.5" fill="currentColor"/><path d="M20 3.5v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+  </div>
+
+  <div class="top-nav">
+    <button class="btn-atras" onclick="window.location.hash='#menu'">
+      <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
+        <path d="M6 1L1 6l5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Atras
+    </button>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.55">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="7.5" r="3.5" stroke="#1B2A4A" stroke-width="1.5"/>
+          <path d="M4 19.5c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.55">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M9 3H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M15 15l4-4-4-4M19 11H9" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-body" id="scroll-body">
+
+    <div class="page-header">
+      <h1 class="page-title">Reportes</h1>
+      <div class="ornament">
+        <div class="ornament-line"></div>
+        <div class="ornament-diamond"></div>
+        <div class="ornament-line"></div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters" id="filters">
+
+      <!-- Provincia -->
+      <div class="filter-row">
+        <div class="filter-label">Provincia</div>
+        <div id="field-provincia"></div>
+      </div>
+
+      <!-- Localidad -->
+      <div class="filter-row">
+        <div class="filter-label">Localidad</div>
+        <div id="field-localidad"></div>
+      </div>
+
+      <!-- Establecimiento -->
+      <div class="filter-row">
+        <div class="filter-label">Establecimiento</div>
+        <div id="field-establecimiento"></div>
+      </div>
+
+      <!-- Zona -->
+      <div class="filter-row">
+        <div class="filter-label">Zona</div>
+        <div id="field-zona"></div>
+      </div>
+
+      <!-- Fecha Desde -->
+      <div class="filter-row">
+        <div class="filter-label">Fecha Desde</div>
+        <div class="date-wrap" id="datewrap-desde">
+          <div class="date-display" id="date-display-desde" onclick="toggleCal('desde')">
+            <span id="date-text-desde" style="color:var(--navy);font-weight:400;">dd-mm-aaaa</span>
+            <svg class="date-icon" width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="4" width="18" height="18" rx="2" stroke="#1B2A4A" stroke-width="1.6"/>
+              <path d="M16 2v4M8 2v4M3 10h18" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="cal-popup" id="cal-desde">
+            <div class="cal-header">
+              <button class="cal-nav" onclick="calNav('desde',-1)">
+                <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M6 1L1 6l5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <span class="cal-month" id="cal-month-desde"></span>
+              <button class="cal-nav" onclick="calNav('desde',1)">
+                <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <div class="cal-weekdays">
+              <div class="cal-wd">Lu</div><div class="cal-wd">Ma</div><div class="cal-wd">Mi</div>
+              <div class="cal-wd">Ju</div><div class="cal-wd">Vi</div><div class="cal-wd">Sa</div><div class="cal-wd">Do</div>
+            </div>
+            <div class="cal-days" id="cal-days-desde"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fecha Hasta -->
+      <div class="filter-row">
+        <div class="filter-label">Fecha Hasta</div>
+        <div class="date-wrap" id="datewrap-hasta">
+          <div class="date-display" id="date-display-hasta" onclick="toggleCal('hasta')">
+            <span id="date-text-hasta" style="color:var(--navy);font-weight:400;">dd-mm-aaaa</span>
+            <svg class="date-icon" width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="4" width="18" height="18" rx="2" stroke="#1B2A4A" stroke-width="1.6"/>
+              <path d="M16 2v4M8 2v4M3 10h18" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="cal-popup" id="cal-hasta">
+            <div class="cal-header">
+              <button class="cal-nav" onclick="calNav('hasta',-1)">
+                <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M6 1L1 6l5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <span class="cal-month" id="cal-month-hasta"></span>
+              <button class="cal-nav" onclick="calNav('hasta',1)">
+                <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <div class="cal-weekdays">
+              <div class="cal-wd">Lu</div><div class="cal-wd">Ma</div><div class="cal-wd">Mi</div>
+              <div class="cal-wd">Ju</div><div class="cal-wd">Vi</div><div class="cal-wd">Sa</div><div class="cal-wd">Do</div>
+            </div>
+            <div class="cal-days" id="cal-days-hasta"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end filters -->
+
+    <!-- Actions -->
+    <div class="action-section">
+      <button class="btn-generar" onclick="generarReporte()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+          <circle cx="11" cy="11" r="8" stroke="#F0EDE8" stroke-width="1.7"/>
+          <path d="M21 21l-4.35-4.35" stroke="#F0EDE8" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+        Generar reporte
+      </button>
+
+      <div class="export-row" id="export-row">
+        <button class="btn-export btn-export-completo" onclick="exportarCSV('completo')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+            <path d="M12 16l-4-4h3V4h2v8h3l-4 4z" fill="#fff"/>
+            <path d="M20 18H4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          CSV completo
+        </button>
+        <button class="btn-export btn-export-modulos" onclick="exportarCSV('modulos')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+            <path d="M12 16l-4-4h3V4h2v8h3l-4 4z" fill="#F0EDE8"/>
+            <path d="M20 18H4" stroke="#F0EDE8" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          CSV por módulo
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="results-section" id="results-section">
+      <div class="results-title">Resumen de dimensiones</div>
+      <div class="stat-block">
+        <div class="stat-total">Total de registros: <strong id="stat-total">—</strong></div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-group-title">Por provincia</div>
+        <div id="stat-provincia"></div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-group-title">Por localidad (Top 5)</div>
+        <div id="stat-localidad"></div>
+      </div>
+    </div>
+
+    <!-- Preview table -->
+    <div class="preview-section" id="preview-section">
+      <div class="preview-title">Previsualización del cubo de datos</div>
+      <div class="table-scroll">
+        <table id="preview-table">
+          <thead id="preview-head"></thead>
+          <tbody id="preview-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- end scroll-body -->
+
+  <div class="popup-overlay" id="error-overlay" onclick="if(event.target===this)cerrarError()">
+    <div class="popup-card">
+      <div class="popup-title">Fechas inválidas</div>
+      <div class="popup-msg" id="error-msg"></div>
+      <button class="popup-btn" onclick="cerrarError()">Entendido</button>
+    </div>
+  </div>
+
+  <div id="dd-portal"></div>
+</div>
+
+<script>
+// ─── CONFIGURACIÓN DE CUENTA ─────────────────────────────────────────────────
+// nivel_acceso: 'agente' | 'admin_caps' | 'admin_provincial'
+// En producción esto viene de window.VisitAuth.getAgente() o sessionStorage
+var CUENTA = {
+  nivel_acceso:    'agente',       // cambiar según el perfil logueado
+  provincia:       '15 - La Rioja',
+  localidad:       '4 - RIOJA_LC1',
+  establecimiento: '19 - Caps Islas Malvinas',
+  zona:            '168 - Microárea 1'
+};
+
+// Si el nivel es admin, estas listas se cargarían desde Supabase
+var OPCIONES = {
+  provincias:       ['15 - La Rioja', '1 - Buenos Aires', '2 - Catamarca'],
+  localidades:      ['4 - RIOJA_LC1', '35 - CHEPES'],
+  establecimientos: ['19 - Caps Islas Malvinas', '38 - Hospital Luis Pasteur'],
+  zonas:            ['168 - Microárea 1', '245 - Zona 3: Nena']
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
+var ES_AGENTE = CUENTA.nivel_acceso === 'agente';
+var reporteData = [];
+var calState = {};
+var MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+var openDD = null;
+var portal = null;
+
+// ── Inicialización ────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  renderFiltros();
+  initCal('desde');
+  initCal('hasta');
+});
+
+function renderFiltros() {
+  var campos = [
+    { id: 'field-provincia',       val: CUENTA.provincia,       key: 'provincias' },
+    { id: 'field-localidad',       val: CUENTA.localidad,       key: 'localidades' },
+    { id: 'field-establecimiento', val: CUENTA.establecimiento, key: 'establecimientos' },
+    { id: 'field-zona',            val: CUENTA.zona,            key: 'zonas' }
+  ];
+
+  campos.forEach(function(c) {
+    var el = document.getElementById(c.id);
+    if (ES_AGENTE) {
+      // Solo lectura — el agente ve sus datos fijos
+      el.innerHTML = '<div class="filter-value-readonly">' + c.val + '</div>';
+    } else {
+      // Admin — dropdown editable
+      var ddId = 'dd-' + c.id;
+      el.innerHTML =
+        '<div class="custom-dropdown" id="' + ddId + '">' +
+          "<button class=\"dropdown-trigger\" onclick=\"toggleDropdown('" + ddId + "')\">" +
+            '<span class="dd-value">' + c.val + '</span>' +
+            '<svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none">' +
+              '<path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+            '</svg>' +
+          '</button>' +
+          buildDropdownList(ddId, OPCIONES[c.key], c.val) +
+        '</div>';
+    }
+  });
+}
+
+
+
+// ── Reporte ───────────────────────────────────────────────────────────────────
+function mostrarError(msg) {
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('error-overlay').classList.add('active');
+}
+
+function cerrarError() {
+  document.getElementById('error-overlay').classList.remove('active');
+}
+
+function generarReporte() {
+  // Validar rango de fechas
+  var desde = getDateStr('desde');
+  var hasta = getDateStr('hasta');
+  if (desde && hasta && desde > hasta) {
+    mostrarError('Combinación de fechas inválida. La fecha "Desde" no puede ser posterior a la fecha "Hasta".');
+    return;
+  }
+  // Por ahora simulamos datos de ejemplo
+  var filtros = {
+    provincia:       ES_AGENTE ? CUENTA.provincia       : getDropdownVal('dd-field-provincia'),
+    localidad:       ES_AGENTE ? CUENTA.localidad       : getDropdownVal('dd-field-localidad'),
+    establecimiento: ES_AGENTE ? CUENTA.establecimiento : getDropdownVal('dd-field-establecimiento'),
+    zona:            ES_AGENTE ? CUENTA.zona            : getDropdownVal('dd-field-zona'),
+    fechaDesde:      calState['desde'] && calState['desde'].selected ? getDateStr('desde') : null,
+    fechaHasta:      calState['hasta'] && calState['hasta'].selected ? getDateStr('hasta') : null
+  };
+
+  // Datos demo — reemplazar con fetch a Supabase
+  reporteData = [
+    { idEncuesta: '7638', Zona: 'Microárea 1', Establecimiento: 'Caps Islas Malvinas', Localidad: 'RIOJA_LC1', Provincia: 'La Rioja', Fecha: '2025-12-12', Lat: '-30.12', Lng: '-66.85', Agente: 'Sanitario, Agente 1', modulo: 'VISITA', codigoGrupo: '01' },
+    { idEncuesta: '7644', Zona: 'Microárea 1', Establecimiento: 'Caps Islas Malvinas', Localidad: 'RIOJA_LC1', Provincia: 'La Rioja', Fecha: '2025-12-13', Lat: '-30.14', Lng: '-66.87', Agente: 'Sanitario, Agente 1', modulo: 'VIVIENDA', codigoGrupo: '10' },
+    { idEncuesta: '7646', Zona: 'Microárea 1', Establecimiento: 'Caps Islas Malvinas', Localidad: 'RIOJA_LC1', Provincia: 'La Rioja', Fecha: '2025-12-14', Lat: '-30.15', Lng: '-66.88', Agente: 'Sanitario, Agente 1', modulo: 'PACIENTE', codigoGrupo: '30' }
+  ];
+
+  // Estadísticas
+  var total = reporteData.length;
+  document.getElementById('stat-total').textContent = total;
+
+  var byProv = {};
+  var byLoc = {};
+  reporteData.forEach(function(r) {
+    byProv[r.Provincia] = (byProv[r.Provincia] || 0) + 1;
+    byLoc[r.Localidad]  = (byLoc[r.Localidad]  || 0) + 1;
+  });
+
+  document.getElementById('stat-provincia').innerHTML = buildStatRows(byProv);
+  document.getElementById('stat-localidad').innerHTML = buildStatRows(byLoc, 5);
+
+  // Preview table
+  var cols = ['idEncuesta', 'Zona', 'Establecimiento', 'Localidad', 'Provincia', 'Fecha', 'Lat', 'Lng', 'Agente', 'modulo', 'codigoGrupo'];
+  var thead = '<tr>' + cols.map(function(c) { return '<th>' + c + '</th>'; }).join('') + '</tr>';
+  var tbody = reporteData.map(function(r) {
+    return '<tr>' + cols.map(function(c) { return '<td>' + (r[c] || '') + '</td>'; }).join('') + '</tr>';
+  }).join('');
+
+  document.getElementById('preview-head').innerHTML = thead;
+  document.getElementById('preview-body').innerHTML = tbody;
+
+  // Show sections
+  document.getElementById('results-section').classList.add('visible');
+  document.getElementById('preview-section').classList.add('visible');
+  document.getElementById('export-row').classList.add('visible');
+
+  // Scroll to results
+  setTimeout(function() {
+    document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+function buildStatRows(obj, limit) {
+  var entries = Object.entries(obj).sort(function(a,b) { return b[1]-a[1]; });
+  if (limit) entries = entries.slice(0, limit);
+  return entries.map(function(e) {
+    return '<div class="stat-row"><span class="stat-row-label">' + e[0] + '</span><span class="stat-row-val">' + e[1] + '</span></div>';
+  }).join('');
+}
+
+function getDropdownVal(ddId) {
+  var trigger = document.querySelector('#' + ddId + ' .dd-value');
+  return trigger ? trigger.textContent : '';
+}
+
+// ── Export CSV ────────────────────────────────────────────────────────────────
+function exportarCSV(tipo) {
+  if (!reporteData.length) return;
+  var NL = "\n";
+  if (tipo === "completo") {
+    var cols = Object.keys(reporteData[0]);
+    var rows = [cols.join(",")];
+    reporteData.forEach(function(r) {
+      rows.push(cols.map(function(c) { return '"' + (r[c] || '') + '"'; }).join(","));
+    });
+    descargarCSV(rows.join(NL), "reporte_completo.csv");
+  } else {
+    var modulos = {};
+    reporteData.forEach(function(r) {
+      var m = r.modulo || "SIN_MODULO";
+      if (!modulos[m]) modulos[m] = [];
+      modulos[m].push(r);
+    });
+    Object.keys(modulos).forEach(function(m) {
+      var filas = modulos[m];
+      var cols = Object.keys(filas[0]);
+      var rows = [cols.join(",")];
+      filas.forEach(function(r) {
+        rows.push(cols.map(function(c) { return '"' + (r[c] || '') + '"'; }).join(","));
+      });
+      descargarCSV(rows.join(NL), "reporte_" + m.toLowerCase() + ".csv");
+    });
+  }
+}
+
+function descargarCSV(csv, nombre) {
+  var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ── Calendar ──────────────────────────────────────────────────────────────────
+function initCal(id) {
+  var now = new Date();
+  calState[id] = { year: now.getFullYear(), month: now.getMonth(), selected: null };
+  renderCal(id);
+}
+
+function toggleCal(id) {
+  var popup   = document.getElementById('cal-' + id);
+  var display = document.getElementById('date-display-' + id);
+  var isOpen  = popup.classList.contains('open');
+  document.querySelectorAll('.cal-popup').forEach(function(c) { c.classList.remove('open'); });
+  document.querySelectorAll('.date-display').forEach(function(d) { d.classList.remove('open'); });
+  if (!isOpen) { popup.classList.add('open'); display.classList.add('open'); }
+}
+
+function calNav(id, dir) {
+  calState[id].month += dir;
+  if (calState[id].month > 11) { calState[id].month = 0; calState[id].year++; }
+  if (calState[id].month < 0)  { calState[id].month = 11; calState[id].year--; }
+  renderCal(id);
+}
+
+function renderCal(id) {
+  var st = calState[id];
+  var header = document.getElementById('cal-month-' + id);
+  header.innerHTML =
+    '<span style="font-family:Lora,serif;font-size:13px;font-weight:600;color:var(--navy);">' +
+    MESES[st.month] + '</span>' +
+    " <button class=\"cal-year-btn\" onclick=\"toggleYearPicker('" + id + "',event)\">" + st.year + "</button>";
+
+  var grid = document.getElementById('cal-days-' + id);
+  grid.innerHTML = '';
+  var first   = new Date(st.year, st.month, 1);
+  var lastDay = new Date(st.year, st.month + 1, 0).getDate();
+  var startDow = (first.getDay() + 6) % 7;
+  var today = new Date();
+
+  for (var i = 0; i < startDow; i++) {
+    var emp = document.createElement('div'); emp.className = 'cal-day empty'; grid.appendChild(emp);
+  }
+  for (var d = 1; d <= lastDay; d++) {
+    var cell = document.createElement('div'); cell.className = 'cal-day'; cell.textContent = d;
+    var cls = [];
+    if (d === today.getDate() && st.month === today.getMonth() && st.year === today.getFullYear()) cls.push('today');
+    if (st.selected && d === st.selected.d && st.month === st.selected.m && st.year === st.selected.y) cls.push('selected');
+    if (cls.length) cell.className += ' ' + cls.join(' ');
+    (function(day) { cell.onclick = function(e) { e.stopPropagation(); pickDate(id, day); }; })(d);
+    grid.appendChild(cell);
+  }
+}
+
+function toggleYearPicker(id, e) {
+  e.stopPropagation();
+  var popup = document.getElementById('cal-' + id);
+  var existing = popup.querySelector('.cal-year-grid');
+  var weekdays = popup.querySelector('.cal-weekdays');
+  var days = popup.querySelector('.cal-days');
+  if (existing) { existing.remove(); weekdays.style.display = ''; days.style.display = ''; return; }
+  weekdays.style.display = 'none'; days.style.display = 'none';
+  var grid = document.createElement('div'); grid.className = 'cal-year-grid open';
+  var now = new Date().getFullYear();
+  var st = calState[id];
+  for (var y = now; y >= 1920; y--) {
+    var opt = document.createElement('div');
+    opt.className = 'cal-year-opt' + (y === st.year ? ' selected' : '');
+    opt.textContent = y;
+    (function(year) {
+      opt.onclick = function(e) {
+        e.stopPropagation();
+        calState[id].year = year;
+        grid.remove(); weekdays.style.display = ''; days.style.display = '';
+        renderCal(id);
+      };
+    })(y);
+    grid.appendChild(opt);
+  }
+  popup.appendChild(grid);
+  setTimeout(function() { var sel = grid.querySelector('.selected'); if (sel) sel.scrollIntoView({ block: 'center' }); }, 50);
+}
+
+function pickDate(id, day) {
+  var st = calState[id];
+  st.selected = { d: day, m: st.month, y: st.year };
+  var dd = String(day).padStart(2, '0');
+  var mm = String(st.month + 1).padStart(2, '0');
+  var txt = document.getElementById('date-text-' + id);
+  txt.textContent = dd + '-' + mm + '-' + st.year;
+  txt.style.color = 'var(--navy)'; txt.style.fontWeight = '600';
+  renderCal(id);
+  document.getElementById('cal-' + id).classList.remove('open');
+  document.getElementById('date-display-' + id).classList.remove('open');
+}
+
+function getDateStr(id) {
+  var st = calState[id].selected;
+  if (!st) return null;
+  return st.y + '-' + String(st.m + 1).padStart(2,'0') + '-' + String(st.d).padStart(2,'0');
+}
+
+// ── Dropdown portal ───────────────────────────────────────────────────────────
+function getPortal() { if (!portal) portal = document.getElementById('dd-portal'); return portal; }
+
+function closePortal() {
+  var p = getPortal();
+  p.style.display = 'none'; p.style.top = 'auto'; p.style.bottom = 'auto'; p.innerHTML = '';
+  if (openDD) { var t = document.querySelector('#' + openDD + ' .dropdown-trigger'); if (t) t.classList.remove('open'); }
+  openDD = null;
+}
+
+function positionPortal(trigger) {
+  var p = getPortal();
+  var phone = document.querySelector('.phone');
+  var phoneRect = phone.getBoundingClientRect();
+  var trigRect  = trigger.getBoundingClientRect();
+  var maxH = 190;
+  var spaceBelow = phoneRect.bottom - trigRect.bottom - 8;
+  var spaceAbove = trigRect.top - phoneRect.top - 8;
+  var phoneH = phoneRect.bottom - phoneRect.top;
+  var openUp = ((trigRect.bottom - phoneRect.top) > phoneH * 0.6) || (spaceAbove > spaceBelow);
+  p.style.width = trigRect.width + 'px';
+  p.style.left  = (trigRect.left - phoneRect.left) + 'px';
+  if (openUp) {
+    p.style.maxHeight = Math.min(maxH, spaceAbove) + 'px';
+    p.style.bottom = (phoneRect.bottom - trigRect.top + 2) + 'px';
+    p.style.top = 'auto';
+  } else {
+    p.style.maxHeight = Math.min(maxH, spaceBelow) + 'px';
+    p.style.top = (trigRect.bottom - phoneRect.top + 2) + 'px';
+    p.style.bottom = 'auto';
+  }
+  p.style.display = 'block';
+}
+
+function toggleDropdown(id) {
+  var trigger = document.querySelector('#' + id + ' .dropdown-trigger');
+  var isOpen  = (openDD === id);
+  closePortal();
+  if (isOpen) return;
+  var srcList = document.getElementById('dl-' + id);
+  var p = getPortal();
+  srcList.querySelectorAll('.dropdown-option').forEach(function(item) {
+    p.appendChild(item.cloneNode(true));
+  });
+  var currentVal = trigger.querySelector('.dd-value').textContent;
+  p.querySelectorAll('.dropdown-option').forEach(function(o) {
+    var val = o.textContent;
+    if (val === currentVal) o.classList.add('selected');
+    o.onclick = function() { selectOption(id, val); };
+  });
+  positionPortal(trigger);
+  trigger.classList.add('open');
+  openDD = id;
+}
+
+function selectOption(id, value) {
+  var trigger = document.querySelector('#' + id + ' .dropdown-trigger');
+  trigger.querySelector('.dd-value').textContent = value;
+  var srcList = document.getElementById('dl-' + id);
+  srcList.querySelectorAll('.dropdown-option').forEach(function(o) {
+    o.classList.toggle('selected', o.textContent === value);
+  });
+  closePortal();
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.custom-dropdown') && !e.target.closest('#dd-portal') && !e.target.closest('.date-wrap')) {
+    closePortal();
+    document.querySelectorAll('.cal-popup').forEach(function(c) { c.classList.remove('open'); });
+  }
+});
+document.addEventListener('scroll', function() { if (openDD) closePortal(); }, { passive: true, capture: true });
+</script>
+</body>
+</html>

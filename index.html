@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>VisitAPS</title>
+<link rel="icon" type="image/png" href="/Logos/favicon.png">
+<link rel="apple-touch-icon" href="/Logos/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style id="shell-styles">
+  /* Base reset + body — shared by all pages */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0 auto;
+    background: #EDEAE4;
+    font-family: 'Montserrat', sans-serif;
+    display: flex;
+    justify-content: center;
+  }
+  /* SPA container */
+  #app {
+    width: 100%;
+    max-width: 390px;
+    min-height: 100vh;
+    position: relative;
+  }
+  /* Fade transition for view swaps */
+  #app.fade-out {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  #app.fade-in {
+    opacity: 1;
+    transition: opacity 0.15s ease;
+  }
+</style>
+<style id="page-styles"></style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/data-service.js"></script>
+<script src="js/form-sync.js"></script>
+<script src="js/router.js"></script>
+
+</body>
+</html>
