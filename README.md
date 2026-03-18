@@ -82,26 +82,3 @@ SUPABASE_URL=...
 SUPABASE_ANON_KEY=...
 SUPABASE_PASSWORD=...    # Solo para migraciones
 ```
-
-## Deploy (Vercel)
-
-```bash
-# Instalar Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-
-# O para producción
-vercel --prod
-```
-
-El proyecto es estático puro (HTML/CSS/JS) — no requiere build step.
-
-## Notas para el equipo de desarrollo
-
-- **El diseño visual es intocable** — no modificar CSS, layouts, ni SVGs inline
-- Los archivos en `pantallas/` son los originales del prototipo y se cargan tal cual
-- La autenticación usa Supabase Auth con email/contraseña
-- Los formularios guardan en tiempo real con debounce de 1.5 segundos
-- El botón "Completar y Guardar" fuerza un save inmediato y cambia el estado a `no_enviado`
