@@ -9,8 +9,8 @@
 (function () {
   'use strict';
 
-  var SUPABASE_URL = 'https://asmfwqsygqebhywujuvo.supabase.co';
-  var SUPABASE_ANON_KEY = 'sb_publishable_kYWhsnzlR3I8MO1ufQnDNA_skePVmct';
+  var SUPABASE_URL = 'TU_SUPABASE_URL';
+  var SUPABASE_ANON_KEY = 'TU_SUPABASE_ANON_KEY';
 
   // Initialize Supabase client
   var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

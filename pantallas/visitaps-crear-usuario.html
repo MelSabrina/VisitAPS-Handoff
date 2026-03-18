@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>VisitAPS – Crear Usuario</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:       #1B2A4A;
+    --navy-light: #243660;
+    --gold:       #C9A84C;
+    --gold-light: #D9BC72;
+    --cream:      #EDEAE4;
+    --cream-dark: #DDD9D2;
+    --text-main:  #2C2C2C;
+    --text-soft:  #7A7672;
+    --gray-btn:   #8A8580;
+    --steel:      #5A7290;
+    --steel-light:#6B84A3;
+  }
+
+  html, body {
+    width: 100%; height: 100dvh;
+    margin: 0 auto;
+    background: #C8C4BC;
+    font-family: 'Montserrat', sans-serif;
+    display: flex; justify-content: center;
+  }
+
+  .phone {
+    width: 100%; max-width: 390px;
+    height: 100dvh;
+    background: var(--cream);
+    display: flex; flex-direction: column;
+    align-items: center;
+    position: relative; overflow-x: hidden;
+  }
+
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%;
+    transform: translateX(-50%);
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(201,168,76,0.10) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .top-bar {
+    width: 100%; height: 4px; flex-shrink: 0;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 50%, var(--navy) 100%);
+    position: relative; z-index: 1;
+  }
+
+  .top-nav {
+    width: 100%; padding: 14px 22px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    position: relative; z-index: 1; flex-shrink: 0;
+  }
+  .btn-atras {
+    display: flex; align-items: center; gap: 5px;
+    background: none; border: none; cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 500;
+    color: var(--navy); opacity: 0.7; padding: 0;
+    transition: opacity 0.2s;
+  }
+  .btn-atras:hover { opacity: 1; }
+  .nav-icon {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0.55; transition: opacity 0.2s;
+  }
+  .nav-icon:hover { opacity: 1; }
+
+  .scroll-body {
+    flex: 1; width: 100%;
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 40px;
+    position: relative; z-index: 1;
+  }
+  .scroll-body::-webkit-scrollbar { display: none; }
+
+  .content {
+    width: 100%;
+    display: flex; flex-direction: column;
+    align-items: center;
+    padding: 0 52px 36px;
+  }
+
+  .page-title {
+    font-family: 'Lora', serif;
+    font-size: 24px; font-weight: 600;
+    color: var(--text-main); text-align: center;
+    margin-top: 24px;
+    animation: fadeDown 0.45s ease both;
+  }
+
+  .ornament {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; margin-top: 14px;
+    animation: fadeIn 0.5s 0.1s ease both;
+  }
+  .ornament-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+  }
+  .ornament-diamond {
+    width: 5px; height: 5px; background: var(--gold);
+    transform: rotate(45deg); flex-shrink: 0;
+  }
+
+  .section-label {
+    width: 100%; margin-top: clamp(8px, 3vh, 24px); margin-bottom: 2px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-soft);
+    animation: fadeUp 0.5s 0.15s ease both;
+  }
+
+  .profile-fields {
+    width: 100%; margin-top: 0;
+    display: flex; flex-direction: column;
+    animation: fadeUp 0.5s 0.15s ease both;
+  }
+
+  .field-row {
+    padding: 6px 0;
+  }
+  .field-row:last-child { border-bottom: none; }
+
+  .block-sep {
+    width: 100%; height: 1px;
+    background: var(--cream-dark);
+    margin: 12px 0 8px;
+  }
+
+  .field-label {
+    font-size: 10px; font-weight: 600;
+    color: var(--text-soft);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .field-value {
+    font-size: 13px; font-weight: 400;
+    color: var(--text-soft);
+  }
+
+  .field-input {
+    width: 100%; padding: 4px 0;
+    border: none; border-bottom: 1.5px solid var(--navy);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600; color: var(--navy);
+    outline: none; transition: border-color 0.2s;
+  }
+  .field-input:focus { border-bottom-color: var(--steel); }
+  .field-input::placeholder { color: var(--text-soft); font-weight: 400; }
+
+  .field-select {
+    width: 100%; padding: 2px 0 4px;
+    border: none; border-bottom: 1.5px solid var(--navy);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600; color: var(--navy);
+    outline: none; cursor: pointer;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%231B2A4A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 2px center;
+    padding-right: 18px;
+  }
+
+  /* Custom dropdown — estilo detalle relevamiento */
+  .custom-dropdown { position: relative; width: 100%; }
+  .dropdown-trigger {
+    width: 100%; padding: 6px 0 6px 0;
+    border: none; border-bottom: 1.5px solid var(--navy);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600; color: var(--text-soft);
+    cursor: pointer; text-align: left;
+    display: flex; justify-content: space-between; align-items: center;
+    transition: border-color 0.2s;
+  }
+  .dropdown-trigger.has-value { color: var(--navy); }
+  .dropdown-trigger.open { border-color: var(--steel); }
+  .dropdown-chevron { opacity: 0.5; transition: transform 0.2s; flex-shrink: 0; }
+  .dropdown-trigger.open .dropdown-chevron { transform: rotate(180deg); }
+
+  /* Portal — renderizado en raíz de .phone, siempre encima */
+  #dd-portal {
+    position: absolute; z-index: 600;
+    background: var(--cream);
+    border: 1px solid var(--cream-dark);
+    border-radius: 8px;
+    overflow-y: auto;
+    box-shadow: 0 4px 16px rgba(27,42,74,0.15);
+    display: none;
+  }
+  #dd-portal::-webkit-scrollbar { display: none; }
+  #dd-portal .dropdown-option {
+    padding: 11px 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 400; color: var(--navy);
+    cursor: pointer;
+    border-bottom: 1px solid var(--cream-dark);
+    transition: background 0.12s;
+  }
+  #dd-portal .dropdown-option:last-child { border-bottom: none; }
+  #dd-portal .dropdown-option:hover { background: rgba(201,168,76,0.08); }
+  #dd-portal .dropdown-option.selected { font-weight: 600; }
+
+  .nivel-badge {
+    display: inline-block;
+    padding: 3px 10px; border-radius: 50px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .nivel-badge.agente           { background: rgba(90,114,144,0.15); color: var(--steel); }
+  .nivel-badge.supervisor       { background: rgba(80,183,178,0.15); color: #2a9490; }
+  .nivel-badge.admin_provincial { background: rgba(201,168,76,0.15); color: #a07a1a; }
+    font-size: 11px; font-weight: 400;
+    color: #C0392B; margin-top: 2px;
+  }
+
+  .action-buttons {
+    width: 100%;
+    display: flex; flex-direction: column; gap: 12px;
+    margin-top: 28px;
+    animation: fadeUp 0.5s 0.25s ease both;
+  }
+
+  .btn-action {
+    width: 100%; padding: 15px 24px;
+    border: none; border-radius: 50px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 0.03em; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-action.steel {
+    background: var(--steel); color: #F0EDE8;
+    box-shadow: 0 4px 14px rgba(90,114,144,0.25);
+  }
+  .btn-action.steel:hover { background: var(--steel-light); transform: translateY(-1px); }
+  .btn-action.steel:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-action.gray {
+    background: var(--gray-btn); color: #F0EDE8;
+  }
+  .btn-action.gray:hover { opacity: 0.85; }
+
+  .footer-actions {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 16px 52px 24px;
+    background: linear-gradient(to bottom, transparent, var(--cream) 30%);
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 50;
+  }
+  .footer-btn-cancel {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 500;
+    color: var(--gray-btn);
+    cursor: pointer; transition: opacity 0.2s;
+  }
+  .footer-btn-cancel:hover { opacity: 0.7; }
+  .footer-btn-crear {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 600;
+    color: var(--steel);
+    cursor: pointer; letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: opacity 0.2s;
+  }
+  .footer-btn-crear:hover { opacity: 0.7; }
+
+  /* Limpiar estilos de botones pill que ya no se usan en esta pantalla */
+  .action-buttons { display: none; }
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="top-bar"></div>
+
+  <div class="top-nav">
+    <button class="btn-atras">
+      <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
+        <path d="M6 1L1 6l5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Atras
+    </button>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="7.5" r="3.5" stroke="#1B2A4A" stroke-width="1.5"/>
+          <path d="M4 19.5c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M9 3H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M15 15l4-4-4-4M19 11H9" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-body">
+    <div class="content">
+
+      <h1 class="page-title">Nuevo usuario</h1>
+
+      <div class="ornament">
+        <div class="ornament-line"></div>
+        <div class="ornament-diamond"></div>
+        <div class="ornament-line"></div>
+      </div>
+
+      <!-- Identificación -->
+      <div class="section-label">Identificación</div>
+      <div class="profile-fields">
+        <div class="field-row">
+          <div class="field-label">Nombre completo <span style="color:var(--gold)">*</span></div>
+          <input class="field-input" id="nuevo-nombre" type="text" placeholder="Nombre y apellido">
+          <div class="field-error" id="err-nombre"></div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">Email <span style="color:var(--gold)">*</span></div>
+          <input class="field-input" id="nuevo-email" type="email" placeholder="usuario@ejemplo.com">
+          <div class="field-error" id="err-email"></div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">Contraseña inicial <span style="color:var(--gold)">*</span></div>
+          <input class="field-input" id="nuevo-pass" type="password" placeholder="Mínimo 6 caracteres">
+          <div class="field-error" id="err-pass"></div>
+        </div>
+      </div>
+
+      <div class="block-sep"></div>
+
+      <!-- Acceso -->
+      <div class="section-label">Nivel de acceso</div>
+      <div class="profile-fields">
+        <div class="field-row">
+          <div class="field-label">Nivel asignado</div>
+          <div class="custom-dropdown" id="dd-nivel">
+            <button type="button" class="dropdown-trigger has-value">
+              <span class="dd-val" style="display:none;">Agente</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="nivel-badge agente" id="nivel-badge">Agente</span>
+                <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="block-sep"></div>
+
+      <!-- Ubicación -->
+      <div class="section-label">Ubicación geográfica</div>
+      <div class="profile-fields">
+        <div class="field-row">
+          <div class="field-label">Provincia</div>
+          <div class="field-value" id="nuevo-provincia">—</div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">Localidad</div>
+          <div class="custom-dropdown" id="dd-localidad">
+            <button type="button" class="dropdown-trigger">
+              <span class="dd-val">Seleccionar localidad</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">Establecimiento</div>
+          <div class="custom-dropdown" id="dd-establecimiento">
+            <button type="button" class="dropdown-trigger">
+              <span class="dd-val">Seleccionar establecimiento</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">Zona</div>
+          <div class="custom-dropdown" id="dd-zona">
+            <button type="button" class="dropdown-trigger">
+              <span class="dd-val">Seleccionar zona</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- separador final -->
+      <div class="block-sep" style="margin-bottom:60px;"></div>
+
+    </div>
+  </div>
+
+  <!-- Barra de acciones fija al pie -->
+  <div class="footer-actions">
+    <span class="footer-btn-cancel" id="btn-cancelar">Cancelar</span>
+    <span class="footer-btn-crear" id="btn-crear">CREAR USUARIO</span>
+  </div>
+
+  <div id="dd-portal"></div>
+</div>
+
+<script>
+// ── Custom dropdowns con portal ───────────────────────────────────────────────
+var _openDD  = null;
+var _portal  = null;
+
+// Datos de los dropdowns
+var _ddData = {
+  'dd-nivel':           { val: 'agente',                  label: 'Agente' },
+  'dd-localidad':       { val: '',                        label: 'Seleccionar localidad' },
+  'dd-establecimiento': { val: '',                        label: 'Seleccionar establecimiento' },
+  'dd-zona':            { val: '',                        label: 'Seleccionar zona' }
+};
+
+var _ddOpts = {
+  'dd-nivel':           [['agente','Agente'],['supervisor','Supervisor'],['admin_provincial','Admin Provincial']],
+  'dd-localidad':       [['test1','test1'],['test2','test2'],['test3','test3']],
+  'dd-establecimiento': [['test1','test1'],['test2','test2'],['test3','test3']],
+  'dd-zona':            [['test1','test1'],['test2','test2'],['test3','test3']]
+};
+
+function getPortal() {
+  if (!_portal) _portal = document.getElementById('dd-portal');
+  return _portal;
+}
+
+function closePortal() {
+  var p = getPortal();
+  p.style.display = 'none'; p.innerHTML = '';
+  if (_openDD) {
+    var t = document.querySelector('#' + _openDD + ' .dropdown-trigger');
+    if (t) t.classList.remove('open');
+  }
+  _openDD = null;
+}
+
+function positionPortal(trigger) {
+  var p         = getPortal();
+  var phone     = document.querySelector('.phone');
+  var phoneRect = phone.getBoundingClientRect();
+  var trigRect  = trigger.getBoundingClientRect();
+  var maxH      = 200;
+  var spaceBelow = phoneRect.bottom - trigRect.bottom - 8;
+  var spaceAbove = trigRect.top - phoneRect.top - 8;
+  p.style.width     = trigRect.width + 'px';
+  p.style.left      = (trigRect.left - phoneRect.left) + 'px';
+  p.style.maxHeight = Math.min(maxH, Math.max(spaceBelow, spaceAbove)) + 'px';
+  if (spaceBelow >= spaceAbove) {
+    p.style.top    = (trigRect.bottom - phoneRect.top + 2) + 'px';
+    p.style.bottom = 'auto';
+  } else {
+    p.style.bottom = (phoneRect.bottom - trigRect.top + 2) + 'px';
+    p.style.top    = 'auto';
+  }
+  p.style.display = 'block';
+}
+
+function openDropdown(ddId) {
+  var trigger = document.querySelector('#' + ddId + ' .dropdown-trigger');
+  var isOpen  = (_openDD === ddId);
+  closePortal();
+  if (isOpen) return;
+
+  var p    = getPortal();
+  var opts = _ddOpts[ddId] || [];
+  var cur  = _ddData[ddId] ? _ddData[ddId].val : '';
+
+  opts.forEach(function(pair) {
+    var div = document.createElement('div');
+    div.className = 'dropdown-option' + (pair[0] === cur ? ' selected' : '');
+    div.textContent = pair[1];
+    div.addEventListener('click', function() {
+      _ddData[ddId] = { val: pair[0], label: pair[1] };
+      var valEl = document.querySelector('#' + ddId + ' .dd-val');
+      if (valEl) {
+        valEl.textContent = pair[1];
+        trigger.classList.add('has-value');
+      }
+      // Actualizar badge de nivel
+      if (ddId === 'dd-nivel') {
+        var badge = document.getElementById('nivel-badge');
+        if (badge) {
+          badge.textContent = pair[1];
+          badge.className = 'nivel-badge ' + pair[0];
+        }
+      }
+      closePortal();
+    });
+    p.appendChild(div);
+  });
+
+  positionPortal(trigger);
+  trigger.classList.add('open');
+  _openDD = ddId;
+}
+
+// Wire triggers
+['dd-nivel','dd-localidad','dd-establecimiento','dd-zona'].forEach(function(id) {
+  var trigger = document.querySelector('#' + id + ' .dropdown-trigger');
+  if (trigger) {
+    trigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      openDropdown(id);
+    });
+  }
+});
+
+document.addEventListener('click', function() { closePortal(); });
+document.addEventListener('scroll', function() { if (_openDD) closePortal(); }, { passive: true, capture: true });
+
+// ── Inicialización — llamada por router ───────────────────────────────────────
+window.initCrearUsuario = function(agente, zonas, nivelesPermitidos) {
+  if (!agente) return;
+  document.getElementById('nuevo-provincia').textContent = agente.provincia || '—';
+  // Actualizar opciones de zona con datos reales
+  if (zonas && zonas.length > 0) {
+    _ddOpts['dd-zona'] = zonas.map(function(z) { return [z, z]; });
+  }
+  if (nivelesPermitidos && nivelesPermitidos.length) {
+    _ddOpts['dd-nivel'] = nivelesPermitidos;
+    // Si el nivel actual no está permitido, resetear al primero
+    var vals = nivelesPermitidos.map(function(p) { return p[0]; });
+    if (vals.indexOf(_ddData['dd-nivel'].val) === -1) {
+      _ddData['dd-nivel'] = { val: nivelesPermitidos[0][0], label: nivelesPermitidos[0][1] };
+      var badge = document.getElementById('nivel-badge');
+      if (badge) {
+        badge.textContent = nivelesPermitidos[0][1];
+        badge.className = 'nivel-badge ' + nivelesPermitidos[0][0];
+      }
+    }
+  }
+};
+
+function getDropdownVal(ddId) {
+  return (_ddData[ddId] && _ddData[ddId].val) || '';
+}
+
+document.getElementById('btn-crear').addEventListener('click', function() {
+  var btn = this;
+
+  var nombre = document.getElementById('nuevo-nombre').value.trim();
+  var email  = document.getElementById('nuevo-email').value.trim();
+  var pass   = document.getElementById('nuevo-pass').value;
+  var valid  = true;
+
+  document.getElementById('err-nombre').textContent = '';
+  document.getElementById('err-email').textContent  = '';
+  document.getElementById('err-pass').textContent   = '';
+
+  if (!nombre) { document.getElementById('err-nombre').textContent = 'El nombre es obligatorio'; valid = false; }
+  if (!email)  { document.getElementById('err-email').textContent  = 'El email es obligatorio'; valid = false; }
+  if (pass.length < 6) { document.getElementById('err-pass').textContent = 'Mínimo 6 caracteres'; valid = false; }
+  if (!valid) return;
+
+  btn.disabled = true;
+  btn.innerHTML = 'Creando…';
+
+  // Mockup — pendiente conectar con Supabase Auth + insert agentes
+  // Los devs deben:
+  // 1. Crear usuario en Auth: supabase.auth.admin.createUser({ email, password })
+  // 2. Insertar en agentes con el auth_uid resultante
+  setTimeout(function() {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><path d="M12 5v14M5 12h14" stroke="#F0EDE8" stroke-width="2" stroke-linecap="round"/></svg> Crear usuario';
+    if (window.showToast) window.showToast('Pendiente implementación backend');
+  }, 600);
+});
+
+document.getElementById('btn-cancelar').addEventListener('click', function() {
+  if (window.navigateTo) window.navigateTo('administracion');
+  else window.history.back();
+});
+</script>
+</body>
+</html>

@@ -22,9 +22,14 @@
      * @returns {Promise<{data, error}>}
      */
     getAgente: function () {
-      return db().from('agentes')
-        .select('*')
-        .single();
+      return window.supabaseClient.auth.getUser().then(function(result) {
+        var uid = result.data && result.data.user ? result.data.user.id : null;
+        if (!uid) return { data: null, error: { message: 'No auth user' } };
+        return window.supabaseClient.from('agentes')
+          .select('*')
+          .eq('auth_uid', uid)
+          .single();
+      });
     },
 
     // ── Rondas ────────────────────────────────────────────────────────────
@@ -198,6 +203,17 @@
     },
 
     /**
+     * Delete a relevamiento (cascade deletes modules and patients)
+     * @param {number} id
+     * @returns {Promise<{error}>}
+     */
+    deleteRelevamiento: function (id) {
+      return db().from('relevamientos')
+        .delete()
+        .eq('id', id);
+    },
+
+    /**
      * Accept terms and conditions for the current agent
      * @param {number} agenteId
      * @returns {Promise<{data, error}>}
@@ -236,6 +252,30 @@
     getFilterOptions: function () {
       return db().from('agentes')
         .select('provincia, localidad, establecimiento, zona');
+    },
+
+    /**
+     * Get all agentes (for admin/supervisor user management)
+     * @returns {Promise<{data, error}>}
+     */
+    getAgentes: function () {
+      return db().from('agentes')
+        .select('*')
+        .order('id', { ascending: true });
+    },
+
+    updateAgente: function (id, fields) {
+      return db().from('agentes')
+        .update(fields)
+        .eq('id', id)
+        .select()
+        .single();
+    },
+
+    updateAgentePassword: function (id, newPassword) {
+      return Promise.resolve({
+        error: { message: 'Requiere service_role key — pendiente implementación backend' }
+      });
     }
   };
 

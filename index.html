@@ -6,6 +6,11 @@
 <title>VisitAPS</title>
 <link rel="icon" type="image/png" href="/Logos/favicon.png">
 <link rel="apple-touch-icon" href="/Logos/favicon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1B2A4A">
+<link rel="manifest" href="/manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style id="shell-styles">
   /* Base reset + body — shared by all pages */
@@ -47,6 +52,11 @@
 <script src="js/data-service.js"></script>
 <script src="js/form-sync.js"></script>
 <script src="js/router.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+</script>
 
 </body>
 </html>

@@ -5,7 +5,7 @@
  * extracts <style>, body content, and <script> blocks, then injects them
  * into #app. Original files stay untouched.
  *
- * Routes: #login, #menu, #perfil, #zona, #rondas, #relevamientos, #detalle
+ * Routes: #login, #menu, #perfil, #zona, #rondas, #relevamientos, #detalle, #terminos, #reportes
  */
 
 (function () {
@@ -21,7 +21,11 @@
     relevamientos:  'pantallas/visitaps-relevamientos.html',
     detalle:        'pantallas/visitaps-detalle-relevamiento.html',
     terminos:       'pantallas/visitaps-terminos.html',
-    reportes:       'pantallas/visitaps-reportes.html'
+    reportes:       'pantallas/visitaps-reportes.html',
+    'menu-admin':      'pantallas/visitaps-menu-admin.html',
+    administracion:       'pantallas/visitaps-administracion.html',
+    'editar-usuario':     'pantallas/visitaps-editar-usuario.html',
+    'crear-usuario':      'pantallas/visitaps-crear-usuario.html'
   };
 
   var DEFAULT_ROUTE = 'login';
@@ -81,7 +85,7 @@
       return;
     }
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
+    xhr.open('GET', url + '?v=' + Date.now(), true);
     xhr.onload = function () {
       if (xhr.status >= 200 && xhr.status < 300) {
         pageCache[pageId] = xhr.responseText;
@@ -164,8 +168,10 @@
     // Wire up navigation elements after mount
     wireNavigation(pageId);
 
-    // Load data from Supabase after mount
-    postMount(pageId, queryParams);
+    // Load data from Supabase after mount (deferred to ensure page scripts are fully registered)
+    setTimeout(function() {
+      postMount(pageId, queryParams);
+    }, 0);
   }
 
   // ── Fade transition then mount ────────────────────────────────────────────
@@ -375,93 +381,387 @@
       });
     }
 
-    // Detalle — initialize form sync
+    // Detalle — three modes: nuevo, lectura, edicion
     if (pageId === 'detalle') {
-      getAgente().then(function (agente) {
-        if (!agente) return;
+      var modo = (params && params.modo) || '';
+      var guardarBtn = appEl.querySelector('.btn-guardar');
+      var btnWrap = guardarBtn ? guardarBtn.closest('.btn-wrap') : null;
 
-        if (params && params.nuevo === '1') {
-          // Create new relevamiento
+      if (params && params.nuevo === '1') {
+        // ── Mode 1: nuevo — create blank relevamiento, editable
+        getAgente().then(function (agente) {
+          if (!agente) return;
           var rondaId = window.__currentRondaId;
           if (!rondaId) { console.error('No ronda ID for new relevamiento'); return; }
           window.VisitData.createRelevamiento(rondaId, agente.id).then(function (result) {
             if (result.error) { console.error(result.error); return; }
             window.FormSync.init(result.data.id, agente.id);
           });
-        } else if (params && params.relevamiento) {
-          // Load existing relevamiento
-          var relevId = parseInt(params.relevamiento, 10);
-          window.FormSync.init(relevId, agente.id);
+        });
+        // Keep guardar button as-is for new relevamientos
+        if (guardarBtn) {
+          guardarBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            guardarBtn.disabled = true;
+            guardarBtn.textContent = 'Guardando…';
+            window.FormSync.saveAll().then(function () {
+              guardarBtn.textContent = 'Guardado ✓';
+              setTimeout(function () {
+                guardarBtn.disabled = false;
+                guardarBtn.textContent = 'Completar y Guardar';
+              }, 2000);
+            });
+          });
         }
-      });
 
-      // Wire "Completar y Guardar" button
-      var guardarBtn = appEl.querySelector('.btn-guardar');
-      if (guardarBtn) {
-        guardarBtn.addEventListener('click', function (e) {
-          e.preventDefault();
-          guardarBtn.disabled = true;
-          guardarBtn.textContent = 'Guardando…';
+      } else if (params && params.relevamiento && modo === 'lectura') {
+        // ── Mode 2: lectura — read-only view
+        var relevId = parseInt(params.relevamiento, 10);
+        getAgente().then(function (agente) {
+          if (!agente) return;
+          window.FormSync.init(relevId, agente.id);
+        });
+
+        // Disable all form inputs after data loads
+        setTimeout(function () {
+          appEl.querySelectorAll('input, textarea, select').forEach(function (el) {
+            el.disabled = true;
+            el.style.opacity = '0.7';
+          });
+          appEl.querySelectorAll('.dropdown-trigger, .custom-dropdown').forEach(function (el) {
+            el.style.pointerEvents = 'none';
+            el.style.opacity = '0.7';
+          });
+        }, 600);
+
+        // Hide guardar button, add bottom padding, show fixed lectura actions
+        if (btnWrap) btnWrap.style.display = 'none';
+        var scrollBody = appEl.querySelector('.scroll-body');
+        if (scrollBody) scrollBody.style.paddingBottom = '80px';
+
+        var actionsDiv = document.createElement('div');
+        actionsDiv.style.cssText = 'position:absolute;bottom:0;left:0;right:0;padding:16px 52px 24px;background:linear-gradient(to bottom,transparent,var(--cream) 30%);display:flex;justify-content:space-between;align-items:center;z-index:50;';
+
+        var editLink = document.createElement('span');
+        editLink.textContent = 'Editar';
+        editLink.style.cssText = 'font-family:Montserrat,sans-serif;font-size:13px;font-weight:600;color:var(--steel);cursor:pointer;transition:opacity 0.2s;';
+        editLink.addEventListener('click', function () {
+          navigateTo('detalle', 'relevamiento=' + relevId + '&modo=edicion');
+        });
+
+        var deleteLink = document.createElement('span');
+        deleteLink.textContent = 'ELIMINAR';
+        deleteLink.style.cssText = 'font-family:Montserrat,sans-serif;font-size:12px;font-weight:300;color:#C0392B;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;transition:opacity 0.2s;';
+        deleteLink.addEventListener('click', function () {
+          showDetallePopup(
+            '¿Eliminar relevamiento?',
+            'Esta acción no se puede deshacer. El relevamiento y todos sus datos serán eliminados permanentemente.',
+            'Cancelar', 'Eliminar',
+            function () {
+              window.VisitData.deleteRelevamiento(relevId).then(function (result) {
+                if (result.error) {
+                  showToast('Error: ' + result.error.message);
+                  return;
+                }
+                var rondaId = window.__currentRondaId;
+                if (rondaId) {
+                  isGoingBack = true;
+                  navigationStack.pop();
+                  navigateTo('relevamientos', 'ronda=' + rondaId);
+                } else {
+                  navigateTo('rondas');
+                }
+                showToast('Relevamiento eliminado');
+              });
+            }
+          );
+        });
+
+        actionsDiv.appendChild(editLink);
+        actionsDiv.appendChild(deleteLink);
+
+        // Inject into .phone (not scroll-body) for fixed positioning
+        var phoneEl = appEl.querySelector('.phone');
+        if (phoneEl) {
+          phoneEl.appendChild(actionsDiv);
+        }
+
+      } else if (params && params.relevamiento && modo === 'edicion') {
+        // ── Mode 3: edicion — editable with save/discard
+        var relevId = parseInt(params.relevamiento, 10);
+        getAgente().then(function (agente) {
+          if (!agente) return;
+          window.FormSync.init(relevId, agente.id);
+        });
+
+        // Hide guardar button, add bottom padding, show fixed edicion actions
+        if (btnWrap) btnWrap.style.display = 'none';
+        var scrollBody = appEl.querySelector('.scroll-body');
+        if (scrollBody) scrollBody.style.paddingBottom = '80px';
+
+        var actionsDiv = document.createElement('div');
+        actionsDiv.style.cssText = 'position:absolute;bottom:0;left:0;right:0;padding:16px 52px 24px;background:linear-gradient(to bottom,transparent,var(--cream) 30%);display:flex;justify-content:space-between;align-items:center;z-index:50;';
+
+        var exitLink = document.createElement('span');
+        exitLink.textContent = 'Salir sin guardar';
+        exitLink.style.cssText = 'font-family:Montserrat,sans-serif;font-size:13px;font-weight:400;color:var(--text-soft);cursor:pointer;transition:opacity 0.2s;';
+        exitLink.addEventListener('click', function () {
+          showDetallePopup(
+            '¿Salir sin guardar?',
+            'Los cambios no guardados se perderán.',
+            'Quedarme', 'Salir',
+            function () {
+              navigateTo('detalle', 'relevamiento=' + relevId + '&modo=lectura');
+            }
+          );
+        });
+
+        var saveLink = document.createElement('span');
+        saveLink.textContent = 'GUARDAR CAMBIOS';
+        saveLink.style.cssText = 'font-family:Montserrat,sans-serif;font-size:12px;font-weight:600;color:var(--steel);cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;transition:opacity 0.2s;';
+        saveLink.addEventListener('click', function () {
+          saveLink.style.opacity = '0.5';
+          saveLink.style.pointerEvents = 'none';
           window.FormSync.saveAll().then(function () {
-            guardarBtn.textContent = 'Guardado ✓';
-            setTimeout(function () {
-              guardarBtn.disabled = false;
-              guardarBtn.textContent = 'Completar y Guardar';
-            }, 2000);
+            navigateTo('detalle', 'relevamiento=' + relevId + '&modo=lectura');
+            showToast('Cambios guardados correctamente');
           });
         });
+
+        actionsDiv.appendChild(exitLink);
+        actionsDiv.appendChild(saveLink);
+
+        // Inject into .phone for fixed positioning
+        var phoneEl = appEl.querySelector('.phone');
+        if (phoneEl) {
+          phoneEl.appendChild(actionsDiv);
+        }
+
+      } else if (params && params.relevamiento) {
+        // Fallback: no modo specified — treat as lectura
+        navigateTo('detalle', 'relevamiento=' + params.relevamiento + '&modo=lectura');
+        return;
       }
     }
 
-    // Terminos — wire confirm/cancel buttons to Supabase
+    // Terminos — two modes: aceptacion (checkbox + buttons) / lectura (read-only)
     if (pageId === 'terminos') {
-      // Override the inline handlers from the static HTML
-      window.handleCancelar = function () {
-        isGoingBack = true;
-        var prev = navigationStack.pop();
-        window.location.hash = prev || 'menu';
-      };
-      window.handleConfirmar = function () {
-        var check = document.getElementById('accept-check');
+      var modo = (params && params.modo) || 'aceptacion';
+
+      if (modo === 'lectura') {
+        // Hide checkbox, action buttons, and error popup
+        var acceptWrap = appEl.querySelector('.accept-wrap');
+        var actionBtns = appEl.querySelector('.action-buttons');
         var popupOverlay = document.getElementById('popup-overlay');
-        if (!check || !check.checked) {
-          if (popupOverlay) popupOverlay.classList.add('active');
-          return;
-        }
-        getAgente().then(function (agente) {
-          if (!agente) return;
-          window.VisitData.acceptTyc(agente.id).then(function (result) {
-            if (result.error) {
-              // Show error in the existing popup
-              var popupMsg = popupOverlay ? popupOverlay.querySelector('.popup-msg') : null;
-              if (popupMsg) popupMsg.textContent = 'Error: ' + result.error.message;
-              if (popupOverlay) popupOverlay.classList.add('active');
-              return;
-            }
-            // Update the cached agente so the gate passes immediately
-            if (cachedAgente) cachedAgente.accepted_tyc = true;
-            navigateTo('menu');
-            showToast('Términos aceptados correctamente');
-          });
+        if (acceptWrap) acceptWrap.style.display = 'none';
+        if (actionBtns) actionBtns.style.display = 'none';
+        if (popupOverlay) popupOverlay.style.display = 'none';
+
+        // Add a "Volver" link at the bottom
+        var volverLink = document.createElement('span');
+        volverLink.textContent = '\u2190 Volver';
+        volverLink.style.cssText = 'font-family:Montserrat,sans-serif;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;display:block;text-align:center;padding:22px 0 0;';
+        volverLink.addEventListener('click', function () {
+          isGoingBack = true;
+          var prev = navigationStack.pop();
+          window.location.hash = prev || 'menu';
         });
-      };
-      window.closePopup = function () {
-        var popupOverlay = document.getElementById('popup-overlay');
-        if (popupOverlay) popupOverlay.classList.remove('active');
-      };
-      window.handleOverlayClick = function (e) {
-        if (e.target === document.getElementById('popup-overlay')) window.closePopup();
-      };
+        var content = appEl.querySelector('.content');
+        if (content) content.appendChild(volverLink);
+      } else {
+        // Aceptacion mode — wire confirm/cancel/popup
+        window.handleCancelar = function () {
+          window.VisitAuth.logout().then(function () {
+            cachedAgente = null;
+            window._reporteAgente   = null;
+            window._reporteOpciones = null;
+            navigationStack = [];
+            navigateTo('login');
+          });
+        };
+        window.handleConfirmar = function () {
+          var check = document.getElementById('accept-check');
+          var popupOv = document.getElementById('popup-overlay');
+          if (!check || !check.checked) {
+            if (popupOv) popupOv.classList.add('active');
+            return;
+          }
+          getAgente().then(function (agente) {
+            if (!agente) return;
+            window.VisitData.acceptTyc(agente.id).then(function (result) {
+              if (result.error) {
+                var popupMsg = popupOv ? popupOv.querySelector('.popup-msg') : null;
+                if (popupMsg) popupMsg.textContent = 'Error: ' + result.error.message;
+                if (popupOv) popupOv.classList.add('active');
+                return;
+              }
+              if (cachedAgente) cachedAgente.accepted_tyc = true;
+              var nivel = (agente.nivel_acceso || 'agente').toLowerCase();
+              if (nivel === 'supervisor' || nivel === 'admin_provincial') {
+                navigateTo('menu-admin');
+              } else {
+                navigateTo('menu');
+              }
+              showToast('Términos aceptados correctamente');
+            });
+          });
+        };
+        window.closePopup = function () {
+          var popupOv = document.getElementById('popup-overlay');
+          if (popupOv) popupOv.classList.remove('active');
+        };
+        window.handleOverlayClick = function (e) {
+          if (e.target === document.getElementById('popup-overlay')) window.closePopup();
+        };
+
+        // Update button labels for this mode
+        var cancelarBtn = appEl.querySelector('.btn-cancelar');
+        var confirmarBtn = appEl.querySelector('.btn-confirmar');
+        if (cancelarBtn) cancelarBtn.textContent = 'Rechazar';
+        if (confirmarBtn) confirmarBtn.textContent = 'Aceptar';
+      }
+    }
+
+    // Zona — render chart + wire action buttons to navigate to rondas
+    if (pageId === 'zona') {
+      setTimeout(function () {
+        if (typeof window.renderChart === 'function') window.renderChart();
+      }, 0);
+      var actionBtns = appEl.querySelectorAll('.btn-action');
+      actionBtns.forEach(function (btn) {
+        var text = btn.textContent.trim().toLowerCase();
+        if (text.indexOf('bajar') !== -1) {
+          btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            btn.disabled = true;
+            btn.innerHTML = '<span>Descargando…</span>';
+            setTimeout(function () {
+              navigateTo('rondas');
+            }, 1200);
+          });
+        } else if (text.indexOf('continuar') !== -1) {
+          btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            navigateTo('rondas');
+          });
+        }
+      });
     }
 
     // Reportes — wire filters + cube report from Supabase
     if (pageId === 'reportes') {
       initReportes();
     }
+
+    if (pageId === 'menu-admin') {
+      getAgente().then(function (agente) {
+        if (!agente) return;
+        var badgeEl = document.getElementById('role-badge');
+        if (badgeEl) {
+          var nivel = (agente.nivel_acceso || '').toLowerCase();
+          if (nivel === 'supervisor') {
+            badgeEl.textContent = 'Supervisor';
+            badgeEl.className = 'role-badge supervisor';
+          } else {
+            badgeEl.textContent = 'Administrador Provincial';
+            badgeEl.className = 'role-badge admin';
+          }
+        }
+      });
+      wireMenuAdminButtons();
+    }
+
+    if (pageId === 'administracion') {
+      getAgente().then(function(agente) {
+        if (!agente) return;
+        var nivel = (agente.nivel_acceso || 'agente').toLowerCase();
+
+        if (window.initAdminTabs) window.initAdminTabs(nivel);
+
+        window.VisitData.getAgentes().then(function(result) {
+          if (result.error || !result.data) return;
+          var usuarios = result.data;
+
+          if (nivel === 'supervisor') {
+            usuarios = usuarios.filter(function(u) {
+              return u.establecimiento === agente.establecimiento;
+            });
+          }
+
+          window._adminUsuarios = usuarios;
+          window._zonasList = [];
+          usuarios.forEach(function(u) {
+            if (u.zona && window._zonasList.indexOf(u.zona) === -1)
+              window._zonasList.push(u.zona);
+          });
+
+          if (window.renderTablaUsuarios) window.renderTablaUsuarios(usuarios);
+
+          if (nivel === 'supervisor') {
+            var zonasMap = {};
+            usuarios.forEach(function(u) {
+              if (u.zona) zonasMap[u.zona] = (zonasMap[u.zona] || 0) + 1;
+            });
+            var zonasArr = Object.keys(zonasMap).map(function(z) {
+              return { zona: z, count: zonasMap[z] };
+            });
+            if (window.renderTablaZonas) window.renderTablaZonas(zonasArr);
+          }
+
+          if (nivel === 'admin_provincial' && window.initEstablecimientos) {
+            // Construir mapa localidad → establecimientos desde agentes
+            var locsArr = [];
+            var estsPorLoc = {};
+            usuarios.forEach(function(u) {
+              if (u.localidad && locsArr.indexOf(u.localidad) === -1)
+                locsArr.push(u.localidad);
+              if (u.localidad && u.establecimiento) {
+                if (!estsPorLoc[u.localidad]) estsPorLoc[u.localidad] = [];
+                var existe = estsPorLoc[u.localidad].some(function(e) {
+                  return e.nombre === u.establecimiento;
+                });
+                if (!existe) estsPorLoc[u.localidad].push({ nombre: u.establecimiento });
+              }
+            });
+            window.initEstablecimientos(agente, locsArr, estsPorLoc);
+          }
+        });
+      });
+    }
+
+    if (pageId === 'editar-usuario') {
+      var usuario = window.__editUsuario;
+      var zonas   = window._zonasList || [];
+      setTimeout(function() {
+        if (window.initEditUsuario) window.initEditUsuario(usuario, zonas);
+      }, 0);
+    }
+
+    if (pageId === 'crear-usuario') {
+      getAgente().then(function(agente) {
+        if (!agente) return;
+        var nivel = (agente.nivel_acceso || 'agente').toLowerCase();
+        var nivelesPermitidos;
+        if (nivel === 'admin_provincial') {
+          nivelesPermitidos = [['agente','Agente'],['supervisor','Supervisor']];
+        } else {
+          nivelesPermitidos = [['agente','Agente']];
+        }
+        setTimeout(function() {
+          if (window.initCrearUsuario) {
+            window.initCrearUsuario(agente, window._zonasList || [], nivelesPermitidos);
+          }
+        }, 0);
+      });
+    }
   }
 
   // ── Reportes — full initialization ──────────────────────────────────────
   function initReportes() {
+    // Limpiar estado anterior para forzar re-render limpio
+    window._reporteAgente   = null;
+    window._reporteOpciones = null;
+
     // Field mappings: [dbColumn, code, label]
     var VISITA_FIELDS = [
       ['fecha_visita','10090','Fecha_visita'],
@@ -602,70 +902,51 @@
       return rows;
     }
 
-    // Define missing function the HTML references but never implements
-    window.buildDropdownList = function (ddId, options, selectedVal) {
-      var html = '<div id="dl-' + ddId + '" style="display:none;">';
-      (options || []).forEach(function (opt) {
-        var sel = opt === selectedVal ? ' selected' : '';
-        html += '<div class="dropdown-option' + sel + '">' + opt + '</div>';
-      });
-      html += '</div>';
-      return html;
-    };
-
     getAgente().then(function (agente) {
-      if (!agente) return;
+      // Limpiar datos de sesión anterior
+      window._reporteAgente   = null;
+      window._reporteOpciones = null;
 
-      // Override globals set by the HTML script
-      window.CUENTA = {
-        nivel_acceso:    agente.nivel_acceso || 'agente',
-        provincia:       agente.provincia || '',
-        localidad:       agente.localidad || '',
-        establecimiento: agente.establecimiento || '',
-        zona:            agente.zona || ''
-      };
-      window.ES_AGENTE = window.CUENTA.nivel_acceso.toLowerCase() === 'agente';
-      window.reporteData = [];
-
-      // Load filter options, then render
-      if (!window.ES_AGENTE) {
-        window.VisitData.getFilterOptions().then(function (result) {
-          var opts = { provincias: [], localidades: [], establecimientos: [], zonas: [] };
-          if (result.data) {
-            result.data.forEach(function (row) {
-              if (row.provincia && opts.provincias.indexOf(row.provincia) === -1) opts.provincias.push(row.provincia);
-              if (row.localidad && opts.localidades.indexOf(row.localidad) === -1) opts.localidades.push(row.localidad);
-              if (row.establecimiento && opts.establecimientos.indexOf(row.establecimiento) === -1) opts.establecimientos.push(row.establecimiento);
-              if (row.zona && opts.zonas.indexOf(row.zona) === -1) opts.zonas.push(row.zona);
-            });
-          }
-          window.OPCIONES = opts;
-          window.renderFiltros();
-        });
-      } else {
-        window.OPCIONES = {};
-        window.renderFiltros();
+      if (!agente) {
+        console.error('[initReportes] No se pudo obtener el agente');
+        return;
       }
 
-      // Init calendars (DOMContentLoaded won't fire in SPA)
+      // Exponer agente para que selectOption() lo lea en cascada
+      window._reporteAgente = agente;
+      window.reporteData = [];
+
+      var nivel = (agente.nivel_acceso || 'agente').toLowerCase();
+
+      // Init calendars
       window.initCal('desde');
       window.initCal('hasta');
 
-      // Save original button HTML for restore after loading
+      // Hook pickDate para limpiar error de fecha
+      var origPickDate = window.pickDate;
+      window.pickDate = function (id, day) {
+        origPickDate(id, day);
+        var fechaErr = document.getElementById('fecha-error');
+        if (fechaErr) fechaErr.style.display = 'none';
+      };
+
+      // Guardar HTML del botón generar para restaurar después de loading
       var genBtn = appEl.querySelector('.btn-generar');
       var genBtnHTML = genBtn ? genBtn.innerHTML : '';
 
-      // Override generarReporte with real Supabase implementation
+      // Override generarReporte con implementación Supabase real
       window.generarReporte = function () {
         var desde = window.getDateStr('desde');
         var hasta = window.getDateStr('hasta');
+        var fechaErr = document.getElementById('fecha-error');
         if (desde && hasta && desde > hasta) {
-          window.mostrarError('Combinación de fechas inválida. La fecha "Desde" no puede ser posterior a la fecha "Hasta".');
+          if (fechaErr) fechaErr.style.display = 'block';
           return;
         }
+        if (fechaErr) fechaErr.style.display = 'none';
 
         var filtros = {};
-        if (window.ES_AGENTE) {
+        if (nivel === 'agente') {
           filtros.agenteId = agente.id;
         }
 
@@ -673,55 +954,92 @@
 
         window.VisitData.getCuboReporte(filtros).then(function (result) {
           if (genBtn) { genBtn.disabled = false; genBtn.innerHTML = genBtnHTML; }
+          if (result.error) { showToast('Error: ' + result.error.message); return; }
 
-          if (result.error) {
-            window.mostrarError('Error: ' + result.error.message);
+          window.reporteData = flattenCubo(result.data || [], desde, hasta);
+
+          var total = window.reporteData.length;
+          var emptyState      = document.getElementById('empty-state');
+          var resultsSection  = document.getElementById('results-section');
+          var previewSection  = document.getElementById('preview-section');
+          var exportRow       = document.getElementById('export-row');
+
+          if (total === 0) {
+            resultsSection.classList.remove('visible');
+            previewSection.classList.remove('visible');
+            exportRow.classList.remove('visible');
+            if (emptyState) emptyState.style.display = 'block';
             return;
           }
 
-          // Flatten into cube rows with date filtering
-          window.reporteData = flattenCubo(result.data || [], desde, hasta);
-
-          // Stats
-          var total = window.reporteData.length;
+          if (emptyState) emptyState.style.display = 'none';
           document.getElementById('stat-total').textContent = total;
 
-          var byProv = {};
-          var byLoc = {};
+          var byProv = {}, byLoc = {};
           window.reporteData.forEach(function (r) {
             if (r.Provincia) byProv[r.Provincia] = (byProv[r.Provincia] || 0) + 1;
-            if (r.Localidad) byLoc[r.Localidad] = (byLoc[r.Localidad] || 0) + 1;
+            if (r.Localidad) byLoc[r.Localidad]  = (byLoc[r.Localidad]  || 0) + 1;
           });
 
           document.getElementById('stat-provincia').innerHTML = window.buildStatRows(byProv);
           document.getElementById('stat-localidad').innerHTML = window.buildStatRows(byLoc, 5);
 
-          // Preview table
-          if (total > 0) {
-            var cols = Object.keys(window.reporteData[0]);
-            var thead = '<tr>' + cols.map(function (c) { return '<th>' + c + '</th>'; }).join('') + '</tr>';
-            var previewRows = window.reporteData.slice(0, 50);
-            var tbody = previewRows.map(function (r) {
-              return '<tr>' + cols.map(function (c) {
-                var v = r[c];
-                return '<td>' + (v !== null && v !== undefined ? v : '') + '</td>';
+          var cols = Object.keys(window.reporteData[0]);
+          document.getElementById('preview-head').innerHTML =
+            '<tr>' + cols.map(function(c) { return '<th>' + c + '</th>'; }).join('') + '</tr>';
+          document.getElementById('preview-body').innerHTML =
+            window.reporteData.slice(0, 50).map(function(r) {
+              return '<tr>' + cols.map(function(c) {
+                var v = r[c]; return '<td>' + (v != null ? v : '') + '</td>';
               }).join('') + '</tr>';
             }).join('');
 
-            document.getElementById('preview-head').innerHTML = thead;
-            document.getElementById('preview-body').innerHTML = tbody;
-          }
-
-          // Show sections
-          document.getElementById('results-section').classList.add('visible');
-          document.getElementById('preview-section').classList.add('visible');
-          document.getElementById('export-row').classList.add('visible');
-
-          setTimeout(function () {
-            document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          resultsSection.classList.add('visible');
+          previewSection.classList.add('visible');
+          exportRow.classList.add('visible');
+          setTimeout(function() {
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }, 100);
         });
       };
+
+      // Cargar opciones y renderizar filtros
+      if (nivel !== 'agente') {
+        window.VisitData.getFilterOptions().then(function (result) {
+          var opciones = { localidades: [], establecimientos: {}, zonas: {} };
+          if (result.data) {
+            result.data.forEach(function (row) {
+              if (row.localidad && opciones.localidades.indexOf(row.localidad) === -1)
+                opciones.localidades.push(row.localidad);
+              if (row.localidad && row.establecimiento) {
+                if (!opciones.establecimientos[row.localidad]) opciones.establecimientos[row.localidad] = [];
+                if (opciones.establecimientos[row.localidad].indexOf(row.establecimiento) === -1)
+                  opciones.establecimientos[row.localidad].push(row.establecimiento);
+              }
+              if (row.establecimiento && row.zona) {
+                if (!opciones.zonas[row.establecimiento]) opciones.zonas[row.establecimiento] = [];
+                if (opciones.zonas[row.establecimiento].indexOf(row.zona) === -1)
+                  opciones.zonas[row.establecimiento].push(row.zona);
+              }
+            });
+          }
+          // Para supervisor: zonas como array plano del establecimiento asignado
+          if (nivel === 'supervisor') {
+            opciones.zonas = opciones.zonas[agente.establecimiento] || [];
+          }
+          window._reporteAgente   = agente;
+          window._reporteOpciones = opciones;
+          document.dispatchEvent(new CustomEvent('reportes:ready', {
+            detail: { agente: agente, opciones: opciones }
+          }));
+        });
+      } else {
+        window._reporteAgente   = agente;
+        window._reporteOpciones = {};
+        document.dispatchEvent(new CustomEvent('reportes:ready', {
+          detail: { agente: agente, opciones: {} }
+        }));
+      }
     });
   }
 
@@ -747,18 +1065,112 @@
   }
 
   // ── Wire navigation handlers on injected DOM ─────────────────────────────
+  function buildHomeIcon(pageId) {
+    var div = document.createElement('div');
+    div.className = 'nav-icon';
+    div.style.cssText = 'width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;';
+    div.innerHTML = '<img src="Logos/logo-button.svg" width="28" height="28" alt="Inicio" style="display:block;">';
+    div.addEventListener('mouseenter', function() { div.style.opacity = '1'; });
+    div.addEventListener('mouseleave', function() { div.style.opacity = '0.55'; });
+
+    function goHome() {
+      getAgente().then(function(agente) {
+        var nivel = agente ? (agente.nivel_acceso || 'agente').toLowerCase() : 'agente';
+        if (nivel === 'supervisor' || nivel === 'admin_provincial') {
+          navigateTo('menu-admin');
+        } else {
+          navigateTo('menu');
+        }
+      });
+    }
+
+    div.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (pageId === 'detalle') {
+        var qp = window.__routeParams || {};
+        if (qp.modo === 'edicion') {
+          showDetallePopup(
+            '¿Salir sin guardar?',
+            'Los cambios no guardados se perderán. El relevamiento se mantendrá como estaba.',
+            'Quedarme', 'Salir',
+            goHome
+          );
+          return;
+        } else if (qp.nuevo === '1') {
+          showDetallePopup(
+            '¿Salir sin guardar?',
+            'Los cambios no guardados se perderán. El relevamiento quedará guardado como borrador.',
+            'Quedarme', 'Salir',
+            goHome
+          );
+          return;
+        }
+      }
+      goHome();
+    });
+    return div;
+  }
+
   function wireNavigation(pageId) {
     // "Atras" buttons — custom stack navigation
     var backBtns = appEl.querySelectorAll('.btn-atras');
     backBtns.forEach(function (btn) {
       btn.addEventListener('click', function (e) {
         e.preventDefault();
+
+        // Detalle — special back behavior per mode
+        if (pageId === 'detalle') {
+          var qp = window.__routeParams || {};
+          var rondaId = window.__currentRondaId;
+          var destHash = rondaId ? 'relevamientos?ronda=' + rondaId : 'rondas';
+
+          function goBackToList() {
+            isGoingBack = true;
+            // Pop detalle (and possibly zona) entries so we land cleanly on relevamientos
+            while (navigationStack.length > 0) {
+              var top = navigationStack[navigationStack.length - 1];
+              if (top.indexOf('relevamientos') === 0 || top === 'rondas' || top === 'menu') break;
+              navigationStack.pop();
+            }
+            window.location.hash = destHash;
+          }
+
+          if (qp.modo === 'lectura') {
+            goBackToList();
+          } else if (qp.modo === 'edicion') {
+            showDetallePopup(
+              '¿Salir sin guardar?',
+              'Los cambios no guardados se perderán. El relevamiento se mantendrá como estaba.',
+              'Quedarme', 'Salir',
+              goBackToList
+            );
+          } else if (qp.nuevo === '1') {
+            showDetallePopup(
+              '¿Salir sin guardar?',
+              'Los cambios no guardados se perderán. El relevamiento quedará guardado como borrador.',
+              'Quedarme', 'Salir',
+              goBackToList
+            );
+          } else {
+            goBackToList();
+          }
+          return;
+        }
+
         isGoingBack = true;
         if (pageId === 'perfil') {
           // Perfil is lateral — return to saved hash (with full query params)
-          var returnHash = profileReturnHash || 'menu';
+          var returnHash = profileReturnHash;
           profileReturnHash = null;
-          window.location.hash = returnHash;
+          if (returnHash) {
+            window.location.hash = returnHash;
+          } else {
+            // Fallback: nivel-aware home screen
+            getAgente().then(function (ag) {
+              var n = ag && ag.nivel_acceso ? ag.nivel_acceso.toLowerCase() : 'agente';
+              window.location.hash = (n === 'supervisor' || n === 'admin_provincial') ? 'menu-admin' : 'menu';
+            });
+          }
         } else {
           // Pop from navigation stack
           var prev = navigationStack.pop();
@@ -772,20 +1184,34 @@
     });
 
     // Detect profile and logout icons by SVG content
-    var navIcons = findNavIcons();
+    var MENU_SCREENS = { menu: true, 'menu-admin': true };
 
-    if (navIcons.profile) {
-      navIcons.profile.addEventListener('click', function (e) {
-        e.preventDefault();
-        navigateTo('perfil');
-      });
-    }
-
-    if (navIcons.logout) {
-      navIcons.logout.addEventListener('click', function (e) {
-        e.preventDefault();
-        showLogoutPopup();
-      });
+    if (MENU_SCREENS[pageId]) {
+      // Menú principal: comportamiento original — perfil + logout
+      var navIcons = findNavIcons();
+      if (navIcons.profile) {
+        navIcons.profile.addEventListener('click', function(e) {
+          e.preventDefault();
+          navigateTo('perfil');
+        });
+      }
+      if (navIcons.logout) {
+        navIcons.logout.addEventListener('click', function(e) {
+          e.preventDefault();
+          showLogoutPopup();
+        });
+      }
+    } else {
+      // Pantallas internas: ocultar perfil, reemplazar logout con home
+      var navIcons = findNavIcons();
+      if (navIcons.profile) {
+        navIcons.profile.style.display = 'none';
+      }
+      if (navIcons.logout) {
+        // Reemplazar el icono logout con el icono Home
+        var homeIcon = buildHomeIcon(pageId);
+        navIcons.logout.parentNode.replaceChild(homeIcon, navIcons.logout);
+      }
     }
 
     // Login button — authenticate with Supabase
@@ -824,7 +1250,20 @@
               showToast('Error: ' + result.error.message);
               return;
             }
-            navigateTo('menu');
+            // Check TyC acceptance before going to menu
+            cachedAgente = null;
+            getAgente().then(function (agente) {
+              if (agente && agente.accepted_tyc) {
+                var nivel = (agente.nivel_acceso || 'agente').toLowerCase();
+                if (nivel === 'supervisor' || nivel === 'admin_provincial') {
+                  navigateTo('menu-admin');
+                } else {
+                  navigateTo('menu');
+                }
+              } else {
+                navigateTo('terminos', 'modo=aceptacion');
+              }
+            });
           });
         });
       }
@@ -833,6 +1272,14 @@
     // Menu buttons
     if (pageId === 'menu') {
       wireMenuButtons();
+    }
+
+    if (pageId === 'menu-admin') {
+      wireMenuAdminButtons();
+    }
+
+    if (pageId === 'administracion') {
+      wireAdminButtons();
     }
 
     // Ronda items — navigate to relevamientos
@@ -925,14 +1372,41 @@
     buttons.forEach(function (btn) {
       var text = btn.textContent.trim().toLowerCase();
       if (text.indexOf('ronda') !== -1) {
-        btn.addEventListener('click', function () { navigateWithTycCheck('rondas'); });
+        btn.addEventListener('click', function () { navigateWithTycCheck('zona'); });
       } else if (text.indexOf('reporte') !== -1) {
         btn.addEventListener('click', function () { navigateWithTycCheck('reportes'); });
-      } else if (text.indexOf('rmino') !== -1) {
-        btn.addEventListener('click', function () { navigateTo('terminos'); });
       }
     });
   }
+
+  // ── Menu-admin button wiring ─────────────────────────────────────────────
+  function wireMenuAdminButtons() {
+    var buttons = appEl.querySelectorAll('.btn-menu');
+    buttons.forEach(function (btn) {
+      var text = btn.textContent.trim().toLowerCase();
+      if (text.indexOf('administraci') !== -1) {
+        btn.addEventListener('click', function () {
+          navigateTo('administracion');
+        });
+      } else if (text.indexOf('reporte') !== -1) {
+        btn.addEventListener('click', function () {
+          navigateWithTycCheck('reportes');
+        });
+      }
+    });
+
+    // TyC link
+    var tycLink = appEl.querySelector('.tyc-link');
+    if (tycLink) {
+      tycLink.onclick = null;
+      tycLink.addEventListener('click', function () {
+        navigateTo('terminos', 'modo=lectura');
+      });
+    }
+  }
+
+  // ── Admin page button wiring (HTML wires internally) ─────────────────────
+  function wireAdminButtons() {}
 
   // ── Ronda item wiring ─────────────────────────────────────────────────────
   function wireRondaItems() {
@@ -953,13 +1427,14 @@
     items.forEach(function (item) {
       item.addEventListener('click', function () {
         var id = item.getAttribute('data-id');
-        navigateTo('detalle', 'relevamiento=' + id);
+        navigateTo('detalle', 'relevamiento=' + id + '&modo=lectura');
       });
     });
 
     // FAB button — new relevamiento
     var fab = appEl.querySelector('.fab');
     if (fab) {
+      fab.style.bottom = '80px';
       fab.addEventListener('click', function () {
         navigateTo('detalle', 'nuevo=1');
       });
@@ -967,6 +1442,53 @@
   }
 
   // ── Logout confirmation popup ─────────────────────────────────────────────
+  // ── Generic confirmation popup for detalle actions ──────────────────────
+  function showDetallePopup(title, message, cancelText, confirmText, onConfirm) {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999;animation:fadeInOverlay 0.2s ease;';
+
+    var card = document.createElement('div');
+    card.style.cssText = 'background:#EDEAE4;border-radius:12px;padding:28px 24px 20px;width:300px;box-shadow:0 8px 32px rgba(0,0,0,0.2);';
+
+    var titleEl = document.createElement('p');
+    titleEl.style.cssText = 'font-family:Lora,serif;font-size:15px;font-weight:600;color:#1B2A4A;margin-bottom:10px;text-align:center;';
+    titleEl.textContent = title;
+
+    var msgEl = document.createElement('p');
+    msgEl.style.cssText = 'font-family:Montserrat,sans-serif;font-size:12px;font-weight:400;color:#7A7672;line-height:1.6;margin-bottom:20px;text-align:center;';
+    msgEl.textContent = message;
+
+    var btns = document.createElement('div');
+    btns.style.cssText = 'display:flex;gap:10px;';
+
+    var cancelBtn = document.createElement('button');
+    cancelBtn.style.cssText = 'flex:1;padding:12px 0;border:none;border-radius:50px;font-family:Montserrat,sans-serif;font-size:13px;font-weight:600;cursor:pointer;background:#8A8580;color:#F0EDE8;';
+    cancelBtn.textContent = cancelText;
+    cancelBtn.addEventListener('click', function () {
+      document.body.removeChild(overlay);
+    });
+
+    var confirmBtn = document.createElement('button');
+    confirmBtn.style.cssText = 'flex:1;padding:12px 0;border:none;border-radius:50px;font-family:Montserrat,sans-serif;font-size:13px;font-weight:600;cursor:pointer;background:#C9A84C;color:#1B2A4A;';
+    confirmBtn.textContent = confirmText;
+    confirmBtn.addEventListener('click', function () {
+      document.body.removeChild(overlay);
+      onConfirm();
+    });
+
+    btns.appendChild(cancelBtn);
+    btns.appendChild(confirmBtn);
+    card.appendChild(titleEl);
+    card.appendChild(msgEl);
+    card.appendChild(btns);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) document.body.removeChild(overlay);
+    });
+  }
+
   function showLogoutPopup() {
     var overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999;animation:fadeInOverlay 0.2s ease;';
@@ -995,6 +1517,8 @@
       document.body.removeChild(overlay);
       window.VisitAuth.logout().then(function () {
         cachedAgente = null;
+        window._reporteAgente   = null;
+        window._reporteOpciones = null;
         navigateTo('login');
       });
     });
@@ -1128,6 +1652,37 @@
     }, 3000);
   }
 
+  // ── Block browser back from root screens (#login, #menu) ────────────────
+  // When mounting a root screen, push a null state and attach a popstate
+  // listener that re-pushes if the user is still on that screen.
+  // The listener removes itself once the user navigates away.
+  var ROOT_SCREENS = { login: true, menu: true, 'menu-admin': true };
+  var _backGuardCleanup = null;
+
+  function installBackGuard(hash) {
+    // Remove previous guard if any
+    if (_backGuardCleanup) _backGuardCleanup();
+
+    var guardHash = '#' + hash;
+    window.history.pushState(null, '', guardHash);
+
+    function blockBack() {
+      if (window.location.hash === guardHash || window.location.hash === '') {
+        window.history.pushState(null, '', guardHash);
+      } else {
+        // Navigated away — remove this guard
+        window.removeEventListener('popstate', blockBack);
+        _backGuardCleanup = null;
+      }
+    }
+
+    window.addEventListener('popstate', blockBack);
+    _backGuardCleanup = function () {
+      window.removeEventListener('popstate', blockBack);
+      _backGuardCleanup = null;
+    };
+  }
+
   // ── Handle hash changes with session guard ────────────────────────────────
   function onHashChange() {
     var route = parseHash();
@@ -1146,8 +1701,8 @@
       if (currentFullHash && currentPage !== 'perfil') {
         profileReturnHash = currentFullHash;
       }
-    } else if (route.page === 'login') {
-      // Login resets everything
+    } else if (route.page === 'login' || route.page === 'menu' || route.page === 'menu-admin') {
+      // Login and menu reset everything — these are "root" screens
       navigationStack = [];
       profileReturnHash = null;
     } else {
@@ -1161,6 +1716,7 @@
     // Public pages don't require auth
     if (route.page === 'login') {
       transitionTo(route.page, queryParams);
+      installBackGuard(route.page);
       return;
     }
 
@@ -1171,6 +1727,7 @@
         return;
       }
       transitionTo(route.page, queryParams);
+      if (ROOT_SCREENS[route.page]) installBackGuard(route.page);
     });
   }
 

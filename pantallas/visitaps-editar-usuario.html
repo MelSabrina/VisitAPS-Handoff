@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>VisitAPS – Editar Usuario</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:       #1B2A4A;
+    --navy-light: #243660;
+    --gold:       #C9A84C;
+    --gold-light: #D9BC72;
+    --cream:      #EDEAE4;
+    --cream-dark: #DDD9D2;
+    --text-main:  #2C2C2C;
+    --text-soft:  #7A7672;
+    --gray-btn:   #8A8580;
+    --steel:      #5A7290;
+    --steel-light:#6B84A3;
+  }
+
+  html, body {
+    width: 100%; height: 100dvh;
+    margin: 0 auto;
+    background: #C8C4BC;
+    font-family: 'Montserrat', sans-serif;
+    display: flex; justify-content: center;
+  }
+
+  .phone {
+    width: 100%; max-width: 390px;
+    height: 100dvh;
+    background: var(--cream);
+    display: flex; flex-direction: column;
+    align-items: center;
+    position: relative; overflow-x: hidden;
+  }
+
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%;
+    transform: translateX(-50%);
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(201,168,76,0.10) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .top-bar {
+    width: 100%; height: 4px; flex-shrink: 0;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 50%, var(--navy) 100%);
+    position: relative; z-index: 1;
+  }
+
+  .top-nav {
+    width: 100%; padding: 14px 22px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    position: relative; z-index: 1; flex-shrink: 0;
+  }
+  .btn-atras {
+    display: flex; align-items: center; gap: 5px;
+    background: none; border: none; cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 500;
+    color: var(--navy); opacity: 0.7; padding: 0;
+    transition: opacity 0.2s;
+  }
+  .btn-atras:hover { opacity: 1; }
+  .nav-icon {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0.55; transition: opacity 0.2s;
+  }
+  .nav-icon:hover { opacity: 1; }
+
+  .scroll-body {
+    flex: 1; width: 100%;
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 70px;
+    position: relative; z-index: 1;
+  }
+  .scroll-body::-webkit-scrollbar { display: none; }
+
+  .content {
+    width: 100%;
+    display: flex; flex-direction: column;
+    align-items: center;
+    padding: 0 52px 20px;
+  }
+
+  .page-title {
+    font-family: 'Lora', serif;
+    font-size: 24px; font-weight: 600;
+    color: var(--text-main); text-align: center;
+    margin-top: 24px;
+    animation: fadeDown 0.45s ease both;
+  }
+
+  .page-subtitle {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 500;
+    color: var(--text-soft); text-align: center;
+    margin-top: 4px; letter-spacing: 0.03em;
+    animation: fadeIn 0.45s 0.05s ease both;
+  }
+
+  .ornament {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; margin-top: 14px;
+    animation: fadeIn 0.5s 0.1s ease both;
+  }
+  .ornament-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+  }
+  .ornament-diamond {
+    width: 5px; height: 5px; background: var(--gold);
+    transform: rotate(45deg); flex-shrink: 0;
+  }
+
+  .section-label {
+    width: 100%; margin-top: clamp(8px, 3vh, 24px); margin-bottom: 2px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-soft);
+  }
+
+  .profile-fields {
+    width: 100%;
+    display: flex; flex-direction: column;
+  }
+
+  .field-row { padding: 6px 0; }
+
+  .block-sep {
+    width: 100%; height: 1px;
+    background: var(--cream-dark);
+    margin: 12px 0 8px;
+  }
+
+  .field-label {
+    font-size: 10px; font-weight: 600;
+    color: var(--text-soft);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .field-value {
+    font-size: 13px; font-weight: 400;
+    color: var(--text-soft);
+  }
+
+  .field-input {
+    width: 100%; padding: 4px 0;
+    border: none; border-bottom: 1.5px solid var(--navy);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600; color: var(--navy);
+    outline: none; transition: border-color 0.2s;
+  }
+  .field-input:focus { border-bottom-color: var(--steel); }
+  .field-input::placeholder { color: var(--text-soft); font-weight: 400; }
+
+  /* Toggle */
+  .toggle-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0;
+  }
+  .toggle-label-wrap { display: flex; flex-direction: column; gap: 3px; }
+  .toggle-label { font-size: 13px; font-weight: 500; color: var(--navy); }
+  .toggle-sublabel { font-size: 10px; font-weight: 400; color: var(--text-soft); }
+  .toggle {
+    position: relative; width: 44px; height: 26px;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-track {
+    position: absolute; inset: 0;
+    background: var(--cream-dark); border-radius: 50px;
+    transition: background 0.2s;
+  }
+  .toggle input:checked + .toggle-track { background: var(--navy); }
+  .toggle-thumb {
+    position: absolute; top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    background: #fff; border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    pointer-events: none;
+  }
+  .toggle input:checked ~ .toggle-thumb { transform: translateX(18px); }
+
+  /* Nivel badge */
+  .nivel-badge {
+    display: inline-block;
+    padding: 3px 10px; border-radius: 50px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .nivel-badge.agente           { background: rgba(90,114,144,0.15); color: var(--steel); }
+  .nivel-badge.supervisor       { background: rgba(80,183,178,0.15); color: #2a9490; }
+  .nivel-badge.admin_provincial { background: rgba(201,168,76,0.15); color: #a07a1a; }
+
+  /* Custom dropdown */
+  .custom-dropdown { position: relative; width: 100%; }
+  .dropdown-trigger {
+    width: 100%; padding: 6px 0;
+    border: none; border-bottom: 1.5px solid var(--navy);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600; color: var(--text-soft);
+    cursor: pointer; text-align: left;
+    display: flex; justify-content: space-between; align-items: center;
+    transition: border-color 0.2s;
+  }
+  .dropdown-trigger.has-value { color: var(--navy); }
+  .dropdown-trigger.open { border-color: var(--steel); }
+  .dropdown-chevron { opacity: 0.5; transition: transform 0.2s; flex-shrink: 0; }
+  .dropdown-trigger.open .dropdown-chevron { transform: rotate(180deg); }
+
+  #dd-portal {
+    position: absolute; z-index: 600;
+    background: var(--cream);
+    border: 1px solid var(--cream-dark);
+    border-radius: 8px;
+    overflow-y: auto;
+    box-shadow: 0 4px 16px rgba(27,42,74,0.15);
+    display: none;
+  }
+  #dd-portal::-webkit-scrollbar { display: none; }
+  #dd-portal .dropdown-option {
+    padding: 11px 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 400; color: var(--navy);
+    cursor: pointer;
+    border-bottom: 1px solid var(--cream-dark);
+    transition: background 0.12s;
+  }
+  #dd-portal .dropdown-option:last-child { border-bottom: none; }
+  #dd-portal .dropdown-option:hover { background: rgba(201,168,76,0.08); }
+  #dd-portal .dropdown-option.selected { font-weight: 600; }
+
+  /* Footer */
+  .footer-actions {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 16px 52px 24px;
+    background: linear-gradient(to bottom, transparent, var(--cream) 30%);
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 50;
+  }
+  .footer-btn-cancel {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 500;
+    color: var(--gray-btn);
+    cursor: pointer; transition: opacity 0.2s;
+  }
+  .footer-btn-cancel:hover { opacity: 0.7; }
+  .footer-btn-guardar {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 600;
+    color: var(--steel);
+    cursor: pointer; letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: opacity 0.2s;
+  }
+  .footer-btn-guardar:hover { opacity: 0.7; }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="top-bar"></div>
+
+  <div class="top-nav">
+    <button class="btn-atras">
+      <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
+        <path d="M6 1L1 6l5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Atras
+    </button>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="7.5" r="3.5" stroke="#1B2A4A" stroke-width="1.5"/>
+          <path d="M4 19.5c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M9 3H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M15 15l4-4-4-4M19 11H9" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-body">
+    <div class="content">
+
+      <h1 class="page-title">Editar usuario</h1>
+      <p class="page-subtitle" id="edit-user-email">—</p>
+
+      <div class="ornament">
+        <div class="ornament-line"></div>
+        <div class="ornament-diamond"></div>
+        <div class="ornament-line"></div>
+      </div>
+
+      <!-- Identificación -->
+      <div class="section-label">Identificación</div>
+      <div class="profile-fields">
+        <div class="field-row">
+          <div class="field-label">Nro. ID</div>
+          <div class="field-value" id="edit-display-id">—</div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">Nombre</div>
+          <input class="field-input" id="edit-nombre" type="text" placeholder="Nombre completo">
+        </div>
+        <div class="field-row">
+          <div class="field-label">Email</div>
+          <div class="field-value" id="edit-email-display">—</div>
+        </div>
+      </div>
+
+      <div class="block-sep"></div>
+
+      <!-- Acceso -->
+      <div class="section-label">Nivel de acceso</div>
+      <div class="profile-fields">
+        <div class="field-row">
+          <div class="field-label">Nivel asignado</div>
+          <div class="custom-dropdown" id="dd-nivel">
+            <button type="button" class="dropdown-trigger has-value">
+              <span class="dd-val" style="display:none;">Agente</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="nivel-badge agente" id="nivel-badge">Agente</span>
+                <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+            </button>
+          </div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-label-wrap">
+            <span class="toggle-label">Usuario habilitado</span>
+            <span class="toggle-sublabel">Permite el acceso a la aplicación</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="edit-habilitado" checked>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="block-sep"></div>
+
+      <!-- Ubicación -->
+      <div class="section-label">Ubicación geográfica</div>
+      <div class="profile-fields">
+        <div class="field-row">
+          <div class="field-label">Provincia</div>
+          <div class="field-value" id="edit-provincia">—</div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">Localidad</div>
+          <div class="field-value" id="edit-localidad">—</div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">Establecimiento</div>
+          <div class="field-value" id="edit-establecimiento">—</div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">Zona</div>
+          <div class="custom-dropdown" id="dd-zona">
+            <button type="button" class="dropdown-trigger">
+              <span class="dd-val">—</span>
+              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="block-sep" style="margin-bottom:60px;"></div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer-actions">
+    <span class="footer-btn-cancel" id="btn-cancelar">Cancelar</span>
+    <span class="footer-btn-guardar" id="btn-guardar">GUARDAR CAMBIOS</span>
+  </div>
+
+  <div id="dd-portal"></div>
+</div>
+
+<script>
+// ── Dropdowns con portal ──────────────────────────────────────────────────────
+var _openDD = null;
+var _portal = null;
+
+var _ddData = {
+  'dd-nivel': { val: 'agente', label: 'Agente' },
+  'dd-zona':  { val: '', label: '—' }
+};
+var _ddOpts = {
+  'dd-nivel': [['agente','Agente'],['supervisor','Supervisor'],['admin_provincial','Admin Provincial']],
+  'dd-zona':  []
+};
+
+function getPortal() {
+  if (!_portal) _portal = document.getElementById('dd-portal');
+  return _portal;
+}
+
+function closePortal() {
+  var p = getPortal();
+  p.style.display = 'none'; p.innerHTML = '';
+  if (_openDD) {
+    var t = document.querySelector('#' + _openDD + ' .dropdown-trigger');
+    if (t) t.classList.remove('open');
+  }
+  _openDD = null;
+}
+
+function positionPortal(trigger) {
+  var p         = getPortal();
+  var phone     = document.querySelector('.phone');
+  var phoneRect = phone.getBoundingClientRect();
+  var trigRect  = trigger.getBoundingClientRect();
+  var maxH      = 200;
+  var spaceBelow = phoneRect.bottom - trigRect.bottom - 8;
+  var spaceAbove = trigRect.top - phoneRect.top - 8;
+  p.style.width     = trigRect.width + 'px';
+  p.style.left      = (trigRect.left - phoneRect.left) + 'px';
+  p.style.maxHeight = Math.min(maxH, Math.max(spaceBelow, spaceAbove)) + 'px';
+  if (spaceBelow >= spaceAbove) {
+    p.style.top    = (trigRect.bottom - phoneRect.top + 2) + 'px';
+    p.style.bottom = 'auto';
+  } else {
+    p.style.bottom = (phoneRect.bottom - trigRect.top + 2) + 'px';
+    p.style.top    = 'auto';
+  }
+  p.style.display = 'block';
+}
+
+function openDropdown(ddId) {
+  var trigger = document.querySelector('#' + ddId + ' .dropdown-trigger');
+  var isOpen  = (_openDD === ddId);
+  closePortal();
+  if (isOpen) return;
+
+  var p    = getPortal();
+  var opts = _ddOpts[ddId] || [];
+  var cur  = _ddData[ddId] ? _ddData[ddId].val : '';
+
+  opts.forEach(function(pair) {
+    var div = document.createElement('div');
+    div.className = 'dropdown-option' + (pair[0] === cur ? ' selected' : '');
+    div.textContent = pair[1];
+    div.addEventListener('click', function() {
+      _ddData[ddId] = { val: pair[0], label: pair[1] };
+      var valEl = document.querySelector('#' + ddId + ' .dd-val');
+      if (valEl) { valEl.textContent = pair[1]; trigger.classList.add('has-value'); }
+      if (ddId === 'dd-nivel') {
+        var badge = document.getElementById('nivel-badge');
+        if (badge) { badge.textContent = pair[1]; badge.className = 'nivel-badge ' + pair[0]; }
+      }
+      closePortal();
+    });
+    p.appendChild(div);
+  });
+
+  positionPortal(trigger);
+  trigger.classList.add('open');
+  _openDD = ddId;
+}
+
+['dd-nivel','dd-zona'].forEach(function(id) {
+  var t = document.querySelector('#' + id + ' .dropdown-trigger');
+  if (t) t.addEventListener('click', function(e) { e.stopPropagation(); openDropdown(id); });
+});
+
+document.addEventListener('click', function() { closePortal(); });
+document.addEventListener('scroll', function() { if (_openDD) closePortal(); }, { passive: true, capture: true });
+
+// ── Inicialización ────────────────────────────────────────────────────────────
+window.initEditUsuario = function(usuario, zonas) {
+  if (!usuario) return;
+  var u = usuario;
+  var nombreCompleto = ((u.nombre || '') + ' ' + (u.apellido || '')).trim();
+
+  document.getElementById('edit-display-id').textContent      = u.id || '—';
+  document.getElementById('edit-user-email').textContent      = u.email || '';
+  document.getElementById('edit-email-display').textContent   = u.email || '';
+  document.getElementById('edit-nombre').value                = nombreCompleto;
+  document.getElementById('edit-provincia').textContent       = u.provincia || '—';
+  document.getElementById('edit-localidad').textContent       = u.localidad || '—';
+  document.getElementById('edit-establecimiento').textContent = u.establecimiento || '—';
+  document.getElementById('edit-habilitado').checked          = u.habilitado !== false;
+
+  // Nivel
+  var nivelVal = (u.nivel_acceso || 'agente').toLowerCase();
+  var nivelLabels = { agente: 'Agente', supervisor: 'Supervisor', admin_provincial: 'Admin Provincial' };
+  var nivelLabel  = nivelLabels[nivelVal] || 'Agente';
+  _ddData['dd-nivel'] = { val: nivelVal, label: nivelLabel };
+  var badge = document.getElementById('nivel-badge');
+  if (badge) { badge.textContent = nivelLabel; badge.className = 'nivel-badge ' + nivelVal; }
+
+  // Zonas
+  var zonasArr = zonas || (u.zona ? [u.zona] : []);
+  _ddOpts['dd-zona'] = zonasArr.map(function(z) { return [z, z]; });
+  _ddData['dd-zona'] = { val: u.zona || '', label: u.zona || '—' };
+  var zonaVal = document.querySelector('#dd-zona .dd-val');
+  if (zonaVal) {
+    zonaVal.textContent = u.zona || '—';
+    if (u.zona) document.querySelector('#dd-zona .dropdown-trigger').classList.add('has-value');
+  }
+};
+
+// ── Guardar ───────────────────────────────────────────────────────────────────
+document.getElementById('btn-guardar').addEventListener('click', function() {
+  var btn    = this;
+  var nombre = document.getElementById('edit-nombre').value.trim();
+  if (!nombre) return;
+
+  var partes    = nombre.split(' ');
+  var nombreVal = partes[0] || '';
+  var apellido  = partes.slice(1).join(' ') || '';
+  var nivel     = _ddData['dd-nivel'].val;
+  var zona      = _ddData['dd-zona'].val;
+  var habilitado = document.getElementById('edit-habilitado').checked;
+  var id        = parseInt(document.getElementById('edit-display-id').textContent);
+
+  btn.style.opacity = '0.5'; btn.style.pointerEvents = 'none';
+
+  window.VisitData.updateAgente(id, {
+    nombre: nombreVal, apellido: apellido,
+    nivel_acceso: nivel, zona: zona, habilitado: habilitado
+  }).then(function(result) {
+    btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+    if (result.error) {
+      if (window.showToast) window.showToast('Error: ' + result.error.message);
+      return;
+    }
+    if (window.showToast) window.showToast('Usuario actualizado correctamente');
+    if (window.navigateTo) window.navigateTo('administracion');
+  });
+});
+
+document.getElementById('btn-cancelar').addEventListener('click', function() {
+  if (window.navigateTo) window.navigateTo('administracion');
+  else window.history.back();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>VisitAPS – Administración</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:       #1B2A4A;
+    --navy-light: #243660;
+    --gold:       #C9A84C;
+    --gold-light: #D9BC72;
+    --cream:      #EDEAE4;
+    --cream-dark: #DDD9D2;
+    --steel:      #5A7290;
+    --steel-light:#6B84A3;
+    --teal:       #50b7b2;
+    --text-main:  #2C2C2C;
+    --text-soft:  #7A7672;
+    --gray-btn:   #8A8580;
+  }
+
+  html, body {
+    width: 100%; height: 100dvh;
+    margin: 0 auto;
+    background: #C8C4BC;
+    font-family: 'Montserrat', sans-serif;
+    display: flex; justify-content: center;
+  }
+
+  .phone {
+    width: 100%; max-width: 390px;
+    height: 100dvh;
+    background: var(--cream);
+    display: flex; flex-direction: column;
+    align-items: center;
+    position: relative; overflow: hidden;
+  }
+
+  .top-bar {
+    width: 100%; height: 4px; flex-shrink: 0;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 50%, var(--navy) 100%);
+  }
+
+  .top-nav {
+    width: 100%; padding: 14px 22px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+  }
+  .btn-atras {
+    display: flex; align-items: center; gap: 5px;
+    background: none; border: none; cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 500;
+    color: var(--navy); opacity: 0.7; padding: 0;
+    transition: opacity 0.2s;
+  }
+  .btn-atras:hover { opacity: 1; }
+  .nav-icon {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0.55; transition: opacity 0.2s;
+  }
+  .nav-icon:hover { opacity: 1; }
+
+  .page-header {
+    width: 100%; padding: 18px 52px 0;
+    display: flex; flex-direction: column; align-items: center;
+    flex-shrink: 0; animation: fadeDown 0.4s ease both;
+  }
+  .page-title {
+    font-family: 'Lora', serif;
+    font-size: 22px; font-weight: 600;
+    color: var(--text-main); text-align: center;
+  }
+  .ornament {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; margin-top: 12px;
+  }
+  .ornament-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+  }
+  .ornament-diamond {
+    width: 5px; height: 5px; background: var(--gold);
+    transform: rotate(45deg); flex-shrink: 0;
+  }
+
+  /* Tabs */
+  .tabs {
+    width: 100%; padding: 16px 52px 0;
+    display: flex; flex-shrink: 0;
+    animation: fadeIn 0.4s 0.1s ease both;
+  }
+  .tab-btn {
+    flex: 1; padding: 10px 0;
+    background: none; border: none;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-soft); cursor: pointer;
+    border-bottom: 2px solid var(--cream-dark);
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); }
+
+  .scroll-body {
+    flex: 1; width: 100%;
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 32px;
+  }
+  .scroll-body::-webkit-scrollbar { display: none; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Botón agregar navy */
+  .btn-agregar {
+    width: calc(100% - 104px);
+    margin: 18px 52px 8px;
+    padding: 13px;
+    border: none; border-radius: 50px;
+    background: var(--steel); color: #F0EDE8;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 14px rgba(90,114,144,0.25);
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-agregar:hover { background: var(--steel-light); transform: translateY(-1px); }
+
+  /* ── Usuarios ───────────────────────────────────────────────────── */
+  .usuario-header {
+    display: flex; align-items: center;
+    padding: 12px 52px 8px;
+    gap: 8px; position: relative;
+  }
+  .usuario-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 52px; right: 52px;
+    height: 1px; background: var(--cream-dark);
+  }
+  .col-id {
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-soft); min-width: 20px; flex-shrink: 0;
+  }
+  .col-usuario {
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-soft); flex: 1;
+  }
+  .col-nivel {
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-soft); width: 72px; text-align: right;
+  }
+
+  .usuario-list { width: 100%; min-height: 0; }
+
+  .usuario-item {
+    display: flex; align-items: center;
+    padding: 13px 52px;
+    position: relative; cursor: pointer;
+    gap: 10px;
+    transition: background 0.15s;
+    animation: fadeIn 0.35s ease both;
+  }
+  .usuario-item::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 52px; right: 52px;
+    height: 1px; background: var(--cream-dark);
+  }
+  .usuario-item:hover { background: rgba(201,168,76,0.05); }
+  .usuario-item:active { background: rgba(201,168,76,0.10); }
+
+  .usuario-id {
+    font-size: 10px; font-weight: 300;
+    color: var(--text-soft); flex-shrink: 0; min-width: 20px;
+  }
+  .usuario-email {
+    font-size: 12px; font-weight: 600;
+    color: var(--navy); flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .usuario-chevron { flex-shrink: 0; opacity: 0.35; }
+
+  .badge {
+    display: inline-block; flex-shrink: 0;
+    padding: 3px 8px; border-radius: 50px;
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .badge-agente     { background: rgba(90,114,144,0.15); color: var(--steel); }
+  .badge-supervisor { background: rgba(80,183,178,0.15); color: #2a9490; }
+  .badge-admin      { background: rgba(201,168,76,0.15); color: #a07a1a; }
+
+  /* ── Establecimientos ───────────────────────────────────────────── */
+  .est-provincia-row {
+    padding: 14px 52px 10px;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+  .est-filter-label {
+    font-size: 10px; font-weight: 600;
+    color: var(--text-soft); letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 3px;
+  }
+  .est-provincia-value {
+    font-size: 13px; font-weight: 400;
+    color: var(--text-soft); padding: 3px 0;
+  }
+
+  .est-localidad-row {
+    padding: 12px 52px;
+    border-bottom: 1px solid var(--cream-dark);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: background 0.15s;
+  }
+  .est-localidad-row:hover { background: rgba(201,168,76,0.04); }
+  .est-localidad-inner { flex: 1; }
+  .est-localidad-value {
+    font-size: 13px; font-weight: 500; color: var(--navy);
+  }
+  .est-localidad-value.placeholder { color: var(--text-soft); font-weight: 400; }
+  .est-localidad-chevron { opacity: 0.45; transition: transform 0.2s; flex-shrink: 0; }
+  .est-localidad-row.open .est-localidad-chevron { transform: rotate(180deg); }
+
+  .btn-agregar-est {
+    display: none;
+    margin: 18px 52px 8px;
+    width: calc(100% - 104px);
+    padding: 13px;
+    border: none; border-radius: 50px;
+    background: var(--steel); color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 14px rgba(90,114,144,0.25);
+    transition: background 0.2s, transform 0.15s;
+    animation: fadeUp 0.3s ease both;
+  }
+  .btn-agregar-est.visible { display: flex; }
+  .btn-agregar-est:hover { background: var(--steel-light); transform: translateY(-1px); }
+
+  .est-empty {
+    padding: 48px 52px 0; text-align: center;
+  }
+  .est-empty-prompt {
+    font-family: 'Lora', serif;
+    font-size: 16px; font-weight: 600;
+    color: var(--gold); line-height: 1.4;
+  }
+  .est-empty-msg {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 400;
+    color: var(--text-soft); margin-top: 8px;
+  }
+
+  .est-list { width: 100%; margin-top: 16px; }
+
+  .est-header {
+    display: flex; align-items: center;
+    padding: 12px 52px 8px;
+    gap: 14px; position: relative;
+  }
+  .est-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 52px; right: 52px;
+    height: 1px; background: var(--cream-dark);
+  }
+  .est-col-id {
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-soft); min-width: 24px; flex-shrink: 0;
+  }
+  .est-col-nombre {
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-soft); flex: 1;
+  }
+
+  .est-item {
+    display: flex; align-items: center;
+    padding: 13px 52px;
+    position: relative; cursor: pointer;
+    transition: background 0.15s; gap: 14px;
+    animation: fadeIn 0.35s ease both;
+  }
+  .est-item::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 52px; right: 52px;
+    height: 1px; background: var(--cream-dark);
+  }
+  .est-item:first-child::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 52px; right: 52px;
+    height: 1px; background: var(--cream-dark);
+  }
+  .est-item:hover { background: rgba(201,168,76,0.05); }
+  .est-item:active { background: rgba(201,168,76,0.10); }
+
+  .est-item-id {
+    font-size: 10px; font-weight: 300;
+    color: var(--text-soft); flex-shrink: 0; min-width: 24px;
+  }
+  .est-item-info { flex: 1; min-width: 0; }
+  .est-item-name {
+    font-size: 12px; font-weight: 600;
+    color: var(--navy); line-height: 1.35;
+  }
+  .est-chevron { flex-shrink: 0; opacity: 0.35; }
+
+  /* ── Empty / loading states ─────────────────────────────────────── */
+  .empty-state {
+    padding: 40px 52px; text-align: center;
+    font-size: 13px; font-weight: 500; color: var(--text-soft);
+  }
+  .loading-state {
+    padding: 40px 52px; text-align: center;
+    font-size: 12px; font-weight: 400; color: var(--text-soft);
+  }
+
+  /* ── Bottom sheet base ──────────────────────────────────────────── */
+  .bs-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(27,42,74,0.35);
+    z-index: 200;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.28s ease;
+  }
+  .bs-backdrop.open { opacity: 1; pointer-events: all; }
+
+  .bs-sheet {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: #F6EDE0;
+    border-radius: 20px 20px 0 0;
+    z-index: 201;
+    transform: translateY(100%);
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+    max-height: 82dvh;
+    display: flex; flex-direction: column;
+  }
+  .bs-sheet.open { transform: translateY(0); }
+
+  .bs-handle {
+    width: 36px; height: 4px;
+    background: var(--cream-dark);
+    border-radius: 50px;
+    margin: 12px auto 0; flex-shrink: 0;
+  }
+
+  .bs-header {
+    padding: 16px 28px 12px;
+    border-bottom: 1px solid var(--cream-dark);
+    flex-shrink: 0;
+  }
+  .bs-title {
+    font-family: 'Lora', serif;
+    font-size: 16px; font-weight: 600; color: var(--navy);
+  }
+  .bs-subtitle {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 400;
+    color: var(--text-soft); margin-top: 2px;
+  }
+
+  /* Lista de localidades */
+  .bs-list {
+    overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1;
+  }
+  .bs-list::-webkit-scrollbar { display: none; }
+
+  .bs-list-item {
+    padding: 14px 28px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 400; color: var(--navy);
+    cursor: pointer; position: relative;
+    transition: background 0.12s;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .bs-list-item::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 28px; right: 28px;
+    height: 1px; background: var(--cream-dark);
+  }
+  .bs-list-item:last-child::after { display: none; }
+  .bs-list-item:hover { background: rgba(201,168,76,0.06); }
+  .bs-list-item.selected { font-weight: 600; }
+  .bs-list-item.selected::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px; background: var(--navy);
+    border-radius: 0 2px 2px 0;
+  }
+
+  .bs-cancel-row {
+    padding: 12px 28px 20px;
+    flex-shrink: 0;
+    border-top: 1px solid var(--cream-dark);
+  }
+  .bs-cancel-btn {
+    width: 100%; padding: 13px;
+    border: none; border-radius: 50px;
+    background: var(--cream-dark); color: var(--text-main);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .bs-cancel-btn:hover { background: #ccc9c2; }
+
+  /* Acciones de item */
+  .bs-actions { padding: 8px 28px 8px; flex-shrink: 0; }
+
+  .bs-action-btn {
+    width: 100%; padding: 16px 0;
+    border: none; background: none;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 14px;
+    color: var(--navy); position: relative;
+    transition: opacity 0.15s;
+  }
+  .bs-action-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px; background: var(--cream-dark);
+  }
+  .bs-action-btn:last-child::after { display: none; }
+  .bs-action-btn:hover { opacity: 0.7; }
+  .bs-action-btn.danger { color: #C0392B; }
+
+  .bs-action-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .bs-action-icon.edit   { background: rgba(201,168,76,0.15); }
+  .bs-action-icon.pass   { background: rgba(27,42,74,0.08); }
+  .bs-action-icon.delete { background: rgba(192,57,43,0.08); }
+
+  /* Crear establecimiento */
+  .bs-form { padding: 20px 28px 0; flex-shrink: 0; }
+  .bs-form-label {
+    font-size: 10px; font-weight: 600;
+    color: var(--text-soft); letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .bs-form-input {
+    width: 100%; padding: 10px 0;
+    border: none; border-bottom: 1.5px solid var(--navy);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px; font-weight: 500; color: var(--navy);
+    outline: none; transition: border-color 0.2s;
+  }
+  .bs-form-input:focus { border-bottom-color: var(--steel); }
+  .bs-form-input::placeholder { color: var(--text-soft); font-weight: 400; font-size: 13px; }
+  .bs-form-error {
+    font-size: 11px; font-weight: 400;
+    color: #C0392B; margin-top: 6px; min-height: 16px;
+  }
+  .bs-crear-footer { padding: 20px 28px 24px; flex-shrink: 0; }
+  .bs-btn-crear {
+    width: 100%; padding: 14px;
+    border: none; border-radius: 50px;
+    background: var(--steel); color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 14px rgba(90,114,144,0.25);
+    transition: background 0.2s, transform 0.15s;
+  }
+  .bs-btn-crear:hover { background: var(--steel-light); transform: translateY(-1px); }
+  .bs-btn-crear:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ── Popup contraseña ───────────────────────────────────────────── */
+  .popup-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999; padding: 32px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .popup-overlay.active { opacity: 1; pointer-events: all; }
+  .popup-card {
+    width: 100%; max-width: 320px;
+    background: var(--cream); border-radius: 12px;
+    padding: 24px 24px 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    transform: translateY(8px); transition: transform 0.2s;
+  }
+  .popup-overlay.active .popup-card { transform: translateY(0); }
+  .popup-title {
+    font-family: 'Lora', serif;
+    font-size: 16px; font-weight: 600;
+    color: var(--navy); margin-bottom: 18px;
+  }
+  .form-field { margin-bottom: 16px; }
+  .form-label {
+    font-size: 10px; font-weight: 600;
+    color: var(--text-soft); letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+  .form-input {
+    width: 100%; padding: 8px 0;
+    border: none; border-bottom: 1px solid var(--cream-dark);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 500; color: var(--navy);
+    outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus { border-bottom-color: var(--steel); }
+  .form-error {
+    font-size: 11px; font-weight: 400; color: #C0392B;
+    margin-top: 4px; min-height: 16px;
+  }
+  .popup-btns { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-popup-cancel {
+    flex: 1; padding: 13px 0;
+    border: none; border-radius: 50px;
+    background: var(--gray-btn); color: #F0EDE8;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn-popup-confirm {
+    flex: 1; padding: 13px 0;
+    border: none; border-radius: 50px;
+    background: var(--navy); color: #F0EDE8;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn-popup-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="top-bar"></div>
+
+  <div class="top-nav">
+    <button class="btn-atras">
+      <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
+        <path d="M6 1L1 6l5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Atras
+    </button>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="7.5" r="3.5" stroke="#1B2A4A" stroke-width="1.5"/>
+          <path d="M4 19.5c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M9 3H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M15 15l4-4-4-4M19 11H9" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-header">
+    <h1 class="page-title">Administración</h1>
+    <div class="ornament">
+      <div class="ornament-line"></div>
+      <div class="ornament-diamond"></div>
+      <div class="ornament-line"></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="usuarios">Usuarios</button>
+    <button class="tab-btn" data-tab="establecimientos">Establecimientos</button>
+  </div>
+
+  <div class="scroll-body">
+
+    <!-- ── TAB USUARIOS ──────────────────────────────────────────── -->
+    <div class="tab-panel active" id="panel-usuarios">
+      <button class="btn-agregar" id="btn-agregar-usuario">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M12 5v14M5 12h14" stroke="#F0EDE8" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Agregar usuario
+      </button>
+      <div id="usuarios-wrap">
+        <div class="loading-state">Cargando usuarios…</div>
+      </div>
+    </div>
+
+    <!-- ── TAB ESTABLECIMIENTOS ──────────────────────────────────── -->
+    <div class="tab-panel" id="panel-establecimientos">
+
+      <div class="est-provincia-row">
+        <div class="est-filter-label">Provincia</div>
+        <div class="est-provincia-value" id="est-provincia-val">—</div>
+      </div>
+
+      <div class="est-localidad-row" id="est-localidad-trigger">
+        <div class="est-localidad-inner">
+          <div class="est-filter-label">Localidad</div>
+          <div class="est-localidad-value placeholder" id="est-localidad-val">Seleccionar localidad</div>
+        </div>
+        <svg class="est-localidad-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none">
+          <path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <button class="btn-agregar-est" id="btn-agregar-est">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Agregar establecimiento
+      </button>
+
+      <div class="est-empty" id="est-empty-state">
+        <div class="est-empty-prompt">Seleccioná una localidad</div>
+        <div class="est-empty-msg">Los establecimientos aparecerán aquí</div>
+      </div>
+
+      <div class="est-list" id="est-list" style="display:none;"></div>
+
+    </div>
+
+  </div><!-- end scroll-body -->
+
+  <!-- ── BACKDROP ──────────────────────────────────────────────── -->
+  <div class="bs-backdrop" id="bs-backdrop"></div>
+
+  <!-- ── BS: Seleccionar localidad ─────────────────────────────── -->
+  <div class="bs-sheet" id="bs-localidades">
+    <div class="bs-handle"></div>
+    <div class="bs-header">
+      <div class="bs-title">Localidad</div>
+      <div class="bs-subtitle" id="bs-loc-subtitle">Seleccioná una localidad</div>
+    </div>
+    <div class="bs-list" id="bs-localidades-list"></div>
+    <div class="bs-cancel-row">
+      <button class="bs-cancel-btn" id="bs-loc-cancel">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- ── BS: Acciones de establecimiento ───────────────────────── -->
+  <div class="bs-sheet" id="bs-acc-est">
+    <div class="bs-handle"></div>
+    <div class="bs-header">
+      <div class="bs-title" id="bs-acc-est-title">Establecimiento</div>
+      <div class="bs-subtitle" id="bs-acc-est-subtitle"></div>
+    </div>
+    <div class="bs-actions">
+      <button class="bs-action-btn" id="bs-est-editar">
+        <div class="bs-action-icon edit">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="#1B2A4A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#1B2A4A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        Editar nombre
+      </button>
+      <button class="bs-action-btn danger" id="bs-est-eliminar">
+        <div class="bs-action-icon delete">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <polyline points="3 6 5 6 21 6" stroke="#C0392B" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="#C0392B" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M10 11v6M14 11v6" stroke="#C0392B" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </div>
+        Eliminar establecimiento
+      </button>
+    </div>
+    <div class="bs-cancel-row">
+      <button class="bs-cancel-btn" id="bs-acc-est-cancel">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- ── BS: Acciones de usuario ───────────────────────────────── -->
+  <div class="bs-sheet" id="bs-acc-usr">
+    <div class="bs-handle"></div>
+    <div class="bs-header">
+      <div class="bs-title" id="bs-acc-usr-title">Usuario</div>
+      <div class="bs-subtitle" id="bs-acc-usr-subtitle"></div>
+    </div>
+    <div class="bs-actions">
+      <button class="bs-action-btn" id="bs-usr-editar">
+        <div class="bs-action-icon edit">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="#1B2A4A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#1B2A4A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        Editar usuario
+      </button>
+      <button class="bs-action-btn" id="bs-usr-pass">
+        <div class="bs-action-icon pass">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="11" width="18" height="11" rx="2" stroke="#1B2A4A" stroke-width="1.7"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#1B2A4A" stroke-width="1.7" stroke-linecap="round"/>
+            <circle cx="12" cy="16" r="1.5" fill="#1B2A4A"/>
+          </svg>
+        </div>
+        Cambiar contraseña
+      </button>
+    </div>
+    <div class="bs-cancel-row">
+      <button class="bs-cancel-btn" id="bs-acc-usr-cancel">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- ── BS: Crear establecimiento ─────────────────────────────── -->
+  <div class="bs-sheet" id="bs-crear-est">
+    <div class="bs-handle"></div>
+    <div class="bs-header">
+      <div class="bs-title">Crear establecimiento</div>
+      <div class="bs-subtitle" id="bs-crear-est-subtitle">—</div>
+    </div>
+    <div class="bs-form">
+      <div class="bs-form-label">Nombre del establecimiento</div>
+      <input class="bs-form-input" id="bs-crear-est-input" type="text" placeholder="Ej: CAPS Islas Malvinas">
+      <div class="bs-form-error" id="bs-crear-est-error"></div>
+    </div>
+    <div class="bs-crear-footer">
+      <button class="bs-btn-crear" id="bs-btn-crear-est">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Crear establecimiento
+      </button>
+    </div>
+  </div>
+
+</div><!-- end phone -->
+
+<!-- ── POPUP CONTRASEÑA ──────────────────────────────────────────── -->
+<div class="popup-overlay" id="popup-pass">
+  <div class="popup-card">
+    <div class="popup-title">Nueva contraseña</div>
+    <div class="form-field">
+      <div class="form-label">Contraseña</div>
+      <input class="form-input" id="pass-input" type="password" placeholder="Mínimo 6 caracteres">
+    </div>
+    <div class="form-field">
+      <div class="form-label">Confirmar</div>
+      <input class="form-input" id="pass-confirm" type="password" placeholder="Repetir contraseña">
+    </div>
+    <div class="form-error" id="err-pass"></div>
+    <div class="popup-btns">
+      <button class="btn-popup-cancel" id="btn-pass-cancel">Cancelar</button>
+      <button class="btn-popup-confirm" id="btn-pass-save">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Estado ────────────────────────────────────────────────────────────────────
+var _adminUsuarios    = [];
+var _zonasList        = [];
+var _passTargetId     = null;
+var _activeBs         = null;
+var _localidades      = [];
+var _establecimientos = {};
+var _localidadActual  = null;
+var _estActual        = null;
+var _usrActual        = null;
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ── initAdminTabs (llamado por router según nivel) ────────────────────────────
+window.initAdminTabs = function(nivel) {
+  var esAdmin      = nivel === 'admin_provincial';
+  var esSupervisor = nivel === 'supervisor';
+  var tabs   = document.querySelectorAll('.tab-btn');
+  var panels = document.querySelectorAll('.tab-panel');
+
+  if (esAdmin) {
+    tabs[0].dataset.tab = 'usuarios';       tabs[0].textContent = 'Usuarios';
+    tabs[1].dataset.tab = 'establecimientos'; tabs[1].textContent = 'Establecimientos';
+    panels[0].id = 'panel-usuarios';
+    panels[1].id = 'panel-establecimientos';
+  } else if (esSupervisor) {
+    tabs[0].dataset.tab = 'usuarios'; tabs[0].textContent = 'Usuarios';
+    tabs[1].dataset.tab = 'zonas';    tabs[1].textContent = 'Zonas';
+    panels[0].id = 'panel-usuarios';
+    panels[1].id = 'panel-zonas';
+    panels[1].innerHTML = '<div id="zonas-wrap"><div class="loading-state">Cargando zonas…</div></div>';
+  }
+};
+
+// ── Bottom sheet helpers ──────────────────────────────────────────────────────
+var backdrop = document.getElementById('bs-backdrop');
+
+function openBS(id) {
+  if (_activeBs) closeBS(_activeBs, false);
+  var sheet = document.getElementById(id);
+  backdrop.classList.add('open');
+  sheet.classList.add('open');
+  _activeBs = id;
+}
+function closeBS(id, clearActive) {
+  if (clearActive === undefined) clearActive = true;
+  document.getElementById(id).classList.remove('open');
+  backdrop.classList.remove('open');
+  if (clearActive) _activeBs = null;
+}
+
+backdrop.addEventListener('click', function() {
+  if (_activeBs) closeBS(_activeBs);
+});
+
+// Swipe down para cerrar
+document.querySelectorAll('.bs-sheet').forEach(function(sheet) {
+  var startY = 0;
+  sheet.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; }, { passive: true });
+  sheet.addEventListener('touchend', function(e) {
+    if (e.changedTouches[0].clientY - startY > 60) closeBS(sheet.id);
+  }, { passive: true });
+});
+
+// ── Helpers de render ─────────────────────────────────────────────────────────
+function nivelBadge(nivel) {
+  var n = (nivel || '').toLowerCase();
+  if (n === 'admin_provincial') return '<span class="badge badge-admin">Admin Prov.</span>';
+  if (n === 'supervisor')       return '<span class="badge badge-supervisor">Supervisor</span>';
+  return '<span class="badge badge-agente">Agente</span>';
+}
+
+// ── Render usuarios ───────────────────────────────────────────────────────────
+window.renderTablaUsuarios = function(usuarios) {
+  _adminUsuarios = usuarios || [];
+  var wrap = document.getElementById('usuarios-wrap');
+  if (!usuarios || usuarios.length === 0) {
+    wrap.innerHTML = '<div class="empty-state">No hay usuarios disponibles</div>';
+    return;
+  }
+
+  var html =
+    '<div class="usuario-header">' +
+      '<span class="col-id">ID</span>' +
+      '<span class="col-usuario">Usuario</span>' +
+      '<span class="col-nivel">Nivel</span>' +
+    '</div>' +
+    '<div class="usuario-list">';
+
+  usuarios.forEach(function(u, i) {
+    var display = u.email || ((u.nombre || '') + ' ' + (u.apellido || '')).trim() || '—';
+    html +=
+      '<div class="usuario-item" data-id="' + u.id + '" style="animation-delay:' + (i * 0.04) + 's">' +
+        '<span class="usuario-id">' + (u.id || '—') + '</span>' +
+        '<span class="usuario-email">' + display + '</span>' +
+        nivelBadge(u.nivel_acceso) +
+        '<svg class="usuario-chevron" width="7" height="12" viewBox="0 0 7 12" fill="none">' +
+          '<path d="M1 1l5 5-5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '</svg>' +
+      '</div>';
+  });
+
+  html += '</div>';
+  wrap.innerHTML = html;
+
+  wrap.querySelectorAll('.usuario-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      var id = parseInt(item.dataset.id);
+      var u  = _adminUsuarios.find(function(x) { return x.id === id; });
+      if (u) abrirAccionesUsuario(u);
+    });
+  });
+};
+
+// ── BS acciones usuario ───────────────────────────────────────────────────────
+function abrirAccionesUsuario(u) {
+  _usrActual = u;
+  var display = u.email || ((u.nombre || '') + ' ' + (u.apellido || '')).trim();
+  document.getElementById('bs-acc-usr-title').textContent    = display;
+  document.getElementById('bs-acc-usr-subtitle').textContent = 'ID: ' + u.id + ' · ' + (u.nivel_acceso || '');
+  openBS('bs-acc-usr');
+}
+
+document.getElementById('bs-acc-usr-cancel').addEventListener('click', function() { closeBS('bs-acc-usr'); });
+
+document.getElementById('bs-usr-editar').addEventListener('click', function() {
+  closeBS('bs-acc-usr');
+  if (_usrActual) {
+    window.__editUsuario = _usrActual;
+    if (window.navigateTo) window.navigateTo('editar-usuario');
+  }
+});
+
+document.getElementById('bs-usr-pass').addEventListener('click', function() {
+  closeBS('bs-acc-usr');
+  if (_usrActual) abrirPass(_usrActual.id);
+});
+
+// ── Render zonas (supervisor) ─────────────────────────────────────────────────
+window.renderTablaZonas = function(zonas) {
+  var wrap = document.getElementById('zonas-wrap');
+  if (!wrap) return;
+  if (!zonas || zonas.length === 0) {
+    wrap.innerHTML = '<div class="empty-state">No hay zonas disponibles</div>';
+    return;
+  }
+  var html = '<div class="usuario-list">';
+  zonas.forEach(function(z, i) {
+    html +=
+      '<div class="usuario-item" style="cursor:default;animation-delay:' + (i*0.04) + 's">' +
+        '<span class="usuario-email">' + z.zona + '</span>' +
+        '<span class="badge badge-agente">' + z.count + ' agentes</span>' +
+      '</div>';
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+};
+
+// ── Establecimientos ──────────────────────────────────────────────────────────
+window.initEstablecimientos = function(agente, localidades, establecimientosPorLoc) {
+  var provEl = document.getElementById('est-provincia-val');
+  if (provEl && agente) provEl.textContent = agente.provincia || '—';
+  document.getElementById('bs-loc-subtitle').textContent =
+    'Provincia: ' + (agente ? agente.provincia : '');
+  _localidades      = localidades || [];
+  _establecimientos = establecimientosPorLoc || {};
+};
+
+document.getElementById('est-localidad-trigger').addEventListener('click', function() {
+  renderLocList();
+  openBS('bs-localidades');
+  this.classList.add('open');
+});
+
+document.getElementById('bs-loc-cancel').addEventListener('click', function() {
+  closeBS('bs-localidades');
+  document.getElementById('est-localidad-trigger').classList.remove('open');
+});
+
+function renderLocList() {
+  var list = document.getElementById('bs-localidades-list');
+  list.innerHTML = '';
+  _localidades.forEach(function(loc) {
+    var item = document.createElement('div');
+    item.className = 'bs-list-item' + (loc === _localidadActual ? ' selected' : '');
+    item.textContent = loc;
+    if (loc === _localidadActual) {
+      var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('width','14'); svg.setAttribute('height','14');
+      svg.setAttribute('viewBox','0 0 24 24'); svg.setAttribute('fill','none');
+      var path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d','M20 6L9 17l-5-5');
+      path.setAttribute('stroke','#1B2A4A'); path.setAttribute('stroke-width','2');
+      path.setAttribute('stroke-linecap','round'); path.setAttribute('stroke-linejoin','round');
+      svg.appendChild(path); item.appendChild(svg);
+    }
+    item.addEventListener('click', function() {
+      seleccionarLocalidad(loc);
+      closeBS('bs-localidades');
+      document.getElementById('est-localidad-trigger').classList.remove('open');
+    });
+    list.appendChild(item);
+  });
+}
+
+function seleccionarLocalidad(loc) {
+  _localidadActual = loc;
+  var valEl = document.getElementById('est-localidad-val');
+  valEl.textContent = loc;
+  valEl.classList.remove('placeholder');
+  document.getElementById('btn-agregar-est').classList.add('visible');
+  renderEstList();
+}
+
+function renderEstList() {
+  var ests   = (_establecimientos[_localidadActual] || []);
+  var listEl = document.getElementById('est-list');
+  var emptyEl = document.getElementById('est-empty-state');
+
+  if (ests.length === 0) {
+    listEl.style.display = 'none';
+    emptyEl.style.display = 'block';
+    emptyEl.querySelector('.est-empty-prompt').textContent = 'Sin establecimientos';
+    emptyEl.querySelector('.est-empty-msg').textContent    = 'Esta localidad no tiene establecimientos cargados';
+    return;
+  }
+
+  emptyEl.style.display = 'none';
+  listEl.style.display = 'block';
+
+  // Agregar header si no existe
+  var headerExist = listEl.previousElementSibling;
+  if (!headerExist || !headerExist.classList.contains('est-header')) {
+    var header = document.createElement('div');
+    header.className = 'est-header';
+    header.innerHTML =
+      '<span class="est-col-nombre">Establecimiento</span>';
+    listEl.parentNode.insertBefore(header, listEl);
+  }
+
+  listEl.innerHTML = '';
+
+  ests.forEach(function(est, i) {
+    var item = document.createElement('div');
+    item.className = 'est-item';
+    item.style.animationDelay = (i * 0.04) + 's';
+    item.innerHTML =
+      (est.id ? '<span class="est-item-id">' + est.id + '</span>' : '') +
+      '<div class="est-item-info"><div class="est-item-name">' + (est.nombre || est.establecimiento || '—') + '</div></div>' +
+      '<svg class="est-chevron" width="7" height="12" viewBox="0 0 7 12" fill="none">' +
+        '<path d="M1 1l5 5-5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg>';
+    item.addEventListener('click', function() { abrirAccionesEst(est); });
+    listEl.appendChild(item);
+  });
+}
+
+// ── BS acciones establecimiento ───────────────────────────────────────────────
+function abrirAccionesEst(est) {
+  _estActual = est;
+  document.getElementById('bs-acc-est-title').textContent    = est.nombre || est.establecimiento || '—';
+  document.getElementById('bs-acc-est-subtitle').textContent = 'ID: ' + (est.id || '—') + ' · ' + (_localidadActual || '');
+  openBS('bs-acc-est');
+}
+
+document.getElementById('bs-acc-est-cancel').addEventListener('click', function() { closeBS('bs-acc-est'); });
+document.getElementById('bs-est-editar').addEventListener('click', function() {
+  closeBS('bs-acc-est');
+  if (window.showToast) window.showToast('Función disponible próximamente');
+});
+document.getElementById('bs-est-eliminar').addEventListener('click', function() {
+  closeBS('bs-acc-est');
+  if (window.showToast) window.showToast('Función disponible próximamente');
+});
+
+// ── BS crear establecimiento ──────────────────────────────────────────────────
+document.getElementById('btn-agregar-est').addEventListener('click', function() {
+  document.getElementById('bs-crear-est-subtitle').textContent = _localidadActual || '';
+  document.getElementById('bs-crear-est-input').value = '';
+  document.getElementById('bs-crear-est-error').textContent = '';
+  openBS('bs-crear-est');
+  setTimeout(function() { document.getElementById('bs-crear-est-input').focus(); }, 350);
+});
+
+document.getElementById('bs-btn-crear-est').addEventListener('click', function() {
+  var btn    = this;
+  var nombre = document.getElementById('bs-crear-est-input').value.trim();
+  var errEl  = document.getElementById('bs-crear-est-error');
+  if (!nombre) { errEl.textContent = 'El nombre es obligatorio'; return; }
+  errEl.textContent = '';
+  btn.disabled = true; btn.textContent = 'Creando…';
+  // Placeholder — conectar con Supabase cuando haya tabla establecimientos
+  setTimeout(function() {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg> Crear establecimiento';
+    closeBS('bs-crear-est');
+    if (window.showToast) window.showToast('Establecimiento creado (pendiente backend)');
+  }, 800);
+});
+
+// ── Popup contraseña ──────────────────────────────────────────────────────────
+function showPopup(id)  { document.getElementById(id).classList.add('active'); }
+function closePopup(id) { document.getElementById(id).classList.remove('active'); }
+
+document.getElementById('popup-pass').addEventListener('click', function(e) {
+  if (e.target === this) closePopup('popup-pass');
+});
+
+function abrirPass(id) {
+  _passTargetId = id;
+  document.getElementById('pass-input').value   = '';
+  document.getElementById('pass-confirm').value = '';
+  document.getElementById('err-pass').textContent = '';
+  showPopup('popup-pass');
+}
+
+document.getElementById('btn-pass-cancel').addEventListener('click', function() { closePopup('popup-pass'); });
+
+document.getElementById('btn-pass-save').addEventListener('click', function() {
+  var btn  = this;
+  var p1   = document.getElementById('pass-input').value;
+  var p2   = document.getElementById('pass-confirm').value;
+  var errEl = document.getElementById('err-pass');
+  if (p1.length < 6) { errEl.textContent = 'Mínimo 6 caracteres'; return; }
+  if (p1 !== p2)     { errEl.textContent = 'Las contraseñas no coinciden'; return; }
+  errEl.textContent = '';
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  window.VisitData.updateAgentePassword(_passTargetId, p1).then(function(result) {
+    btn.disabled = false; btn.textContent = 'Confirmar';
+    if (result && result.error) { errEl.textContent = result.error.message; return; }
+    closePopup('popup-pass');
+    if (window.showToast) window.showToast('Contraseña actualizada');
+  }).catch(function() {
+    btn.disabled = false; btn.textContent = 'Confirmar';
+    errEl.textContent = 'No disponible — requiere permisos de administrador';
+  });
+});
+
+// ── Botones stub ──────────────────────────────────────────────────────────────
+document.getElementById('btn-agregar-usuario').addEventListener('click', function() {
+  if (window.navigateTo) window.navigateTo('crear-usuario');
+});
+
+</script>
+</body>
+</html>

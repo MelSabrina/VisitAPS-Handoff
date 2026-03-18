@@ -3,7 +3,10 @@
     "allow": [
       "Bash(sleep:*)",
       "Bash(curl:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(mkdir:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)"
     ]
   }
 }
