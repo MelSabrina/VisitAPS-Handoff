@@ -2,45 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=390, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>VisitAPS – Rondas Sanitarias</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html, body {
-    width: 100%;
-    min-height: 100vh;
-    margin: 0 auto;
-    background: #C8C4BC;
-    font-family: 'Montserrat', sans-serif;
-    display: flex;
-    justify-content: center;
-  }
-
-  .phone {
-    width: 100%;
-    max-width: 390px;
-    height: 100vh;
-    background: var(--cream);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  :root {
-    --navy:       #1B2A4A;
-    --navy-light: #243660;
-    --gold:       #C9A84C;
-    --gold-light: #D9BC72;
-    --cream:      #EDEAE4;
-    --cream-dark: #DDD9D2;
-    --text-main:  #2C2C2C;
-    --text-soft:  #7A7672;
-    --gray-btn:   #8A8580;
-  }
 
   
 
@@ -48,7 +13,7 @@
 
   .top-bar {
     width: 100%; height: 4px;
-    background: linear-gradient(90deg, #1B2A4A 0%, #C9A84C 50%, #1B2A4A 100%);
+    background: var(--gold);
     flex-shrink: 0;
   }
 
@@ -220,10 +185,10 @@
     from { opacity: 0; }
     to   { opacity: 1; }
   }
+  .nav-icon:hover { opacity: 1 !important; }
 </style>
 </head>
 <body>
-<div class="phone">
   <div class="top-bar"></div>
 
 
@@ -235,13 +200,13 @@
       Atras
     </button>
     <div style="display:flex;gap:12px;align-items:center;">
-      <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.55">
+      <div class="nav-icon" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;">
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="11" cy="7.5" r="3.5" stroke="#1B2A4A" stroke-width="1.5"/>
           <path d="M4 19.5c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
       </div>
-      <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.55">
+      <div class="nav-icon" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;">
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 3H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
           <path d="M15 15l4-4-4-4M19 11H9" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -262,7 +227,7 @@
   <!-- Fixed bottom -->
   <div class="bottom-section">
     <div style="width:calc(100% - 104px);margin:0 52px;height:1px;background:var(--cream-dark);"></div>
-    <span onclick="actualizarRondas()" style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;color:var(--navy);opacity:0.55;cursor:pointer;letter-spacing:0.02em;transition:opacity 0.2s;display:block;text-align:center;padding:14px 0 0;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.55">Actualizar rondas</span>
+    <span id="btn-actualizar-rondas" class="nav-icon" style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;color:var(--navy);opacity:0.55;cursor:pointer;letter-spacing:0.02em;transition:opacity 0.2s;display:block;text-align:center;padding:14px 0 0;">Actualizar rondas</span>
 
     <div class="memory-section">
       <div class="memory-title">Espacio de memoria</div>
@@ -287,8 +252,6 @@
       </div>
     </div>
   </div>
-
-</div>
 
 
 

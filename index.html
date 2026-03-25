@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=390, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>VisitAPS</title>
 <link rel="icon" type="image/png" href="/Logos/favicon.png">
 <link rel="apple-touch-icon" href="/Logos/favicon.png">
@@ -13,32 +13,154 @@
 <link rel="manifest" href="/manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style id="shell-styles">
-  /* Base reset + body — shared by all pages */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:       #1B2A4A;
+    --navy-light: #243660;
+    --gold:       #C9A84C;
+    --gold-light: #D9BC72;
+    --cream:      #EDEAE4;
+    --cream-dark: #DDD9D2;
+    --text-main:  #2C2C2C;
+    --text-soft:  #7A7672;
+    --gray-btn:   #8A8580;
+    --steel:      #5A7290;
+    --steel-light:#6B84A3;
+    --teal:       #50b7b2;
+    --badge-teal-bg: rgba(80, 183, 178, 0.15);
+    --badge-gold-bg: rgba(201, 168, 76, 0.15);
+    --badge-navy-bg: rgba(27, 42, 74, 0.08);
+    --badge-steel-bg:  rgba(90, 114, 144, 0.15);
+    --badge-teal-text: #2a9490;
+    --badge-gold-text: #a07a1a;
+  }
+
   html, body {
-    width: 100%;
-    min-height: 100vh;
-    margin: 0 auto;
-    background: #EDEAE4;
+    width: 100vw; height: 100dvh;
+    margin: 0; padding: 0;
+    background: var(--cream);
     font-family: 'Montserrat', sans-serif;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
+    align-items: flex-start;
+    overflow: hidden;
   }
-  /* SPA container */
+
   #app {
     width: 100%;
-    max-width: 390px;
-    min-height: 100vh;
+    max-width: 100%;
+    height: 100dvh;
     position: relative;
+    overflow: hidden;
+    background: var(--cream);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
-  /* Fade transition for view swaps */
-  #app.fade-out {
-    opacity: 0;
-    transition: opacity 0.15s ease;
+
+  @media (min-width: 600px) {
+    #app > *:not(.top-bar):not(.fab):not(.fab-top):not(.bs-backdrop):not(.bs-sheet):not(.popup-overlay):not(.info-backdrop):not(.info-sheet):not(#dd-portal):not(#bs-identi-sheet):not(.action-bar) {
+      max-width: 720px;
+      width: 100%;
+    }
   }
-  #app.fade-in {
-    opacity: 1;
-    transition: opacity 0.15s ease;
+
+  /* Bloquear landscape en mobile */
+  @media screen and (max-width: 599px) and (orientation: landscape) {
+    html {
+      transform: rotate(-90deg);
+      transform-origin: left top;
+      width: 100vh; height: 100vw;
+      overflow-x: hidden;
+      position: absolute;
+      top: 100%; left: 0;
+    }
+  }
+
+  #app.fade-out { opacity: 0; transition: opacity 0.15s ease; }
+  #app.fade-in  { opacity: 1; transition: opacity 0.15s ease; }
+
+  .bg-glow {
+    position: absolute;
+    top: -60px; left: 50%;
+    transform: translateX(-50%);
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(201,168,76,0.10) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .bs-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+  .bs-sheet {
+    position: fixed !important;
+    max-width: 600px !important;
+    left: 50% !important;
+    transform: translateX(-50%) translateY(100%) !important;
+  }
+  .bs-sheet.open {
+    transform: translateX(-50%) translateY(0) !important;
+  }
+  .popup-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+  .date-display .placeholder {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--navy);
+    opacity: 0.65;
+  }
+  .action-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--cream);
+    z-index: 10;
+  }
+  .action-bar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    width: calc(100% - 104px);
+    max-width: 616px;
+    margin: 0 auto;
+    height: 1px;
+    background: var(--cream-dark);
+  }
+
+  .action-bar-btn {
+    flex: 1;
+    max-width: 360px;
+    text-align: center;
+    background: none; border: none; cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.06em; padding: 8px 0;
+    transition: opacity 0.2s;
+  }
+  .action-bar-btn:hover { opacity: 0.7; }
+  .action-bar-btn.danger  { color: #C0392B; }
+  .action-bar-btn.primary { color: var(--steel); }
+  /* Danger solo es rojo en lectura — destrucción irreversible */
+  #app[data-mode="lectura"] .action-bar-btn.danger {
+    color: #C0392B;
+    font-weight: 500;
+  }
+  #app[data-mode="edicion"] .action-bar-btn.danger,
+  #app[data-mode="nuevo"]   .action-bar-btn.danger {
+    color: var(--text-soft);
+    font-weight: 400;
   }
 </style>
 <style id="page-styles"></style>
@@ -56,6 +178,74 @@
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
 }
+</script>
+
+<script>
+// ── Scroll delegado con momentum para zonas laterales ─────────────────────
+(function() {
+  var velocity = 0;
+  var lastTouchY = null;
+  var rafId = null;
+  var activeScrollBody = null;
+
+  function getScrollBody() {
+    return document.querySelector('.scroll-body');
+  }
+
+  function applyMomentum() {
+    if (!activeScrollBody || Math.abs(velocity) < 0.5) {
+      velocity = 0;
+      rafId = null;
+      return;
+    }
+    activeScrollBody.scrollTop += velocity;
+    velocity *= 0.95;
+    rafId = requestAnimationFrame(applyMomentum);
+  }
+
+  function startMomentum(scrollBody) {
+    activeScrollBody = scrollBody;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(applyMomentum);
+  }
+
+  // Wheel (mouse/trackpad) — momentum inmediato
+  document.getElementById('app').addEventListener('wheel', function(e) {
+    var scrollBody = getScrollBody();
+    if (!scrollBody || scrollBody.contains(e.target)) return;
+    e.preventDefault();
+    velocity = e.deltaY * 0.4;
+    startMomentum(scrollBody);
+  }, { passive: false });
+
+  // Touch — momentum al soltar
+  document.getElementById('app').addEventListener('touchstart', function(e) {
+    var scrollBody = getScrollBody();
+    if (!scrollBody || scrollBody.contains(e.target)) return;
+    lastTouchY = e.touches[0].clientY;
+    velocity = 0;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  }, { passive: true });
+
+  document.getElementById('app').addEventListener('touchmove', function(e) {
+    var ddPortal = document.getElementById('dd-portal');
+    if (ddPortal && ddPortal.contains(e.target)) return; // dejar scroll nativo en portal
+    var scrollBody = getScrollBody();
+    if (!scrollBody || scrollBody.contains(e.target)) return;
+    if (lastTouchY === null) return;
+    var delta = lastTouchY - e.touches[0].clientY;
+    velocity = delta;
+    lastTouchY = e.touches[0].clientY;
+    scrollBody.scrollTop += delta;
+  }, { passive: true });
+
+  document.getElementById('app').addEventListener('touchend', function() {
+    var scrollBody = getScrollBody();
+    if (!scrollBody) return;
+    lastTouchY = null;
+    if (Math.abs(velocity) > 1) startMomentum(scrollBody);
+  }, { passive: true });
+})();
 </script>
 
 </body>

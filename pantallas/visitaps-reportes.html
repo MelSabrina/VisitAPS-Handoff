@@ -2,46 +2,13 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=390, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>VisitAPS – Reportes</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --navy:       #1B2A4A;
-    --navy-light: #243660;
-    --gold:       #C9A84C;
-    --gold-light: #D9BC72;
-    --cream:      #EDEAE4;
-    --cream-dark: #DDD9D2;
-    --text-main:  #2C2C2C;
-    --text-soft:  #7A7672;
-    --steel:      #5A7290;
-    --steel-light:#6B84A3;
-    --teal:       #50b7b2;
-  }
-
-  html, body {
-    width: 100%; min-height: 100vh;
-    margin: 0 auto;
-    background: #C8C4BC;
-    font-family: 'Montserrat', sans-serif;
-    display: flex; justify-content: center;
-  }
-
-  .phone {
-    width: 100%; max-width: 390px;
-    height: 100vh;
-    background: var(--cream);
-    display: flex; flex-direction: column;
-    align-items: center;
-    position: relative; overflow: hidden;
-  }
-
   .top-bar {
     width: 100%; height: 4px; flex-shrink: 0;
-    background: linear-gradient(90deg, #1B2A4A 0%, #C9A84C 50%, #1B2A4A 100%);
+    background: var(--gold);
   }
 
   .top-nav {
@@ -448,10 +415,18 @@
   @keyframes fadeIn {
     from { opacity: 0; } to { opacity: 1; }
   }
+  .fecha-hint {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-soft);
+    text-align: center;
+    margin-top: 8px;
+    padding: 0 52px;
+  }
 </style>
 </head>
 <body>
-<div class="phone">
   <div class="top-bar"></div>
 
   <div class="top-nav">
@@ -520,7 +495,7 @@
         <div class="filter-label">Fecha Desde</div>
         <div class="date-wrap" id="datewrap-desde">
           <div class="date-display" id="date-display-desde" onclick="toggleCal('desde')">
-            <span id="date-text-desde" style="color:var(--navy);font-weight:500;opacity:0.5;">dd-mm-aaaa</span>
+            <span class="placeholder" id="date-text-desde">dd-mm-aaaa</span>
             <svg class="date-icon" width="14" height="14" viewBox="0 0 24 24" fill="none">
               <rect x="3" y="4" width="18" height="18" rx="2" stroke="#1B2A4A" stroke-width="1.6"/>
               <path d="M16 2v4M8 2v4M3 10h18" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round"/>
@@ -550,7 +525,7 @@
         <div class="filter-label">Fecha Hasta</div>
         <div class="date-wrap" id="datewrap-hasta">
           <div class="date-display" id="date-display-hasta" onclick="toggleCal('hasta')">
-            <span id="date-text-hasta" style="color:var(--navy);font-weight:500;opacity:0.5;">dd-mm-aaaa</span>
+            <span class="placeholder" id="date-text-hasta">dd-mm-aaaa</span>
             <svg class="date-icon" width="14" height="14" viewBox="0 0 24 24" fill="none">
               <rect x="3" y="4" width="18" height="18" rx="2" stroke="#1B2A4A" stroke-width="1.6"/>
               <path d="M16 2v4M8 2v4M3 10h18" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round"/>
@@ -577,6 +552,8 @@
       </div>
 
     </div><!-- end filters -->
+
+    <p class="fecha-hint">Si no seleccionás fechas, se exportan todos los registros disponibles.</p>
 
     <!-- Actions -->
     <div class="action-section">
@@ -639,7 +616,6 @@
   </div><!-- end scroll-body -->
 
   <div id="dd-portal"></div>
-</div>
 
 <script>
 // ─── Reportes — UI functions ─────────────────────────────────────────────────
@@ -662,20 +638,20 @@ if (!document._reportesDropdownWired) {
 
 // ── Helpers de render ─────────────────────────────────────────────────────────
 function readonly(val) {
-  return '<div class="filter-value-readonly">' + (val || '—') + '</div>';
+  return '<div class="filter-value-readonly">' + escapeHtml(val || '—') + '</div>';
 }
 
 function makeDropdown(fieldId, opciones, val, disabled) {
   var ddId = 'dd-' + fieldId;
   if (disabled) {
-    return '<div class="filter-value-disabled">' + (val || '—') + '</div>';
+    return '<div class="filter-value-disabled">' + escapeHtml(val || '—') + '</div>';
   }
   // Guardar opciones para el portal
   window._ddOpts = window._ddOpts || {};
   window._ddOpts[ddId] = { opciones: opciones, selected: val };
   var out = '<div class="custom-dropdown" id="' + ddId + '">';
   out += '<button class="dropdown-trigger' + (!val || val.indexOf('Seleccionar') === 0 ? ' has-placeholder' : '') + '" data-toggle="' + ddId + '">';
-  out += '<span class="dd-value">' + (val || '—') + '</span>';
+  out += '<span class="dd-value">' + escapeHtml(val || '—') + '</span>';
   out += '<svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none">';
   out += '<path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
   out += '</svg></button></div>';
@@ -685,6 +661,7 @@ function makeDropdown(fieldId, opciones, val, disabled) {
 // ── Render filtros según nivel_acceso ─────────────────────────────────────────
 window.renderFiltros = function(agente, opciones) {
   var nivel = (agente.nivel_acceso || 'agente').toLowerCase();
+
   opciones = opciones || {};
 
   document.getElementById('field-provincia').innerHTML = readonly(agente.provincia);
@@ -771,11 +748,16 @@ function selectOption(id, value) {
   }
 }
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function buildStatRows(obj, limit) {
   var entries = Object.entries(obj).sort(function(a,b) { return b[1]-a[1]; });
   if (limit) entries = entries.slice(0, limit);
   return entries.map(function(e) {
-    return '<div class="stat-row"><span class="stat-row-label">' + e[0] + '</span><span class="stat-row-val">' + e[1] + '</span></div>';
+    return '<div class="stat-row"><span class="stat-row-label">' + escapeHtml(e[0]) + '</span><span class="stat-row-val">' + escapeHtml(String(e[1])) + '</span></div>';
   }).join('');
 }
 
@@ -934,7 +916,7 @@ function closePortal() {
 
 function positionPortal(trigger) {
   var p = getPortal();
-  var phone    = document.querySelector('.phone');
+  var phone    = document.getElementById('app');
   var phoneRect = phone.getBoundingClientRect();
   var trigRect  = trigger.getBoundingClientRect();
   var maxH = 190;

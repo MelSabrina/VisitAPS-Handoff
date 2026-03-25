@@ -13,7 +13,7 @@
 
   // ── Route → file mapping ──────────────────────────────────────────────────
   var ROUTES = {
-    login:          'pantallas/visitaps-login-v2.html',
+    login:          'pantallas/visitaps-login.html',
     menu:           'pantallas/visitaps-menu.html',
     perfil:         'pantallas/visitaps-perfil.html',
     zona:           'pantallas/visitaps-actualizar-zona.html',
@@ -215,6 +215,16 @@
     });
   }
 
+  // ── HTML escaping utility (XSS prevention) ───────────────────────────
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   // ── Post-mount data loading from Supabase ──────────────────────────────
   // Cache the agente record for the session
   var cachedAgente = null;
@@ -270,14 +280,20 @@
     svg.appendChild(line);
   }
 
+  /**
+   * Dispatcher central de carga de datos, ejecutado después de cada montaje de pantalla.
+   * Según el pageId, consulta Supabase y popula el DOM con los datos correspondientes.
+   * @param {string} pageId - Identificador de la pantalla montada (ej: 'perfil', 'rondas', 'detalle').
+   * @param {Object} params - Query params de la ruta actual (window.__routeParams).
+   */
   function postMount(pageId, params) {
-    // Perfil — populate agent info
+    // Perfil — carga datos del agente logueado y los muestra en los campos estáticos
     if (pageId === 'perfil') {
       getAgente().then(function (agente) {
         if (!agente) return;
-        var fields = appEl.querySelectorAll('.field-value');
-        // Order matches the perfil page structure
-        var mapping = ['id', 'nombre', 'email', 'email', 'provincia', 'localidad', 'region', 'establecimiento', 'zona', 'nivel_acceso'];
+        var fields = appEl.querySelectorAll('.field-value:not(#nivel-acceso-badge)');
+        // Order matches the perfil page structure (excluding nivel badge)
+        var mapping = ['id', 'nombre', 'email', 'email', 'provincia', 'localidad', 'region', 'establecimiento', 'zona'];
         fields.forEach(function (el, i) {
           if (mapping[i] && agente[mapping[i]] !== undefined) {
             if (mapping[i] === 'nombre' && agente.apellido) {
@@ -287,10 +303,19 @@
             }
           }
         });
+        // Nivel de acceso badge
+        var badgeEl = document.getElementById('nivel-acceso-badge');
+        if (badgeEl) {
+          var nivel = (agente.nivel_acceso || 'agente').toLowerCase();
+          var labels = { agente: 'Agente', supervisor: 'Supervisor', admin_provincial: 'Administrador Provincial' };
+          var label = labels[nivel] || labels.agente;
+          var cls = nivel === 'admin_provincial' ? 'admin_provincial' : nivel;
+          badgeEl.innerHTML = '<span class="nivel-badge ' + cls + '">' + label + '</span>';
+        }
       });
     }
 
-    // Rondas — load from Supabase
+    // Rondas — obtiene listado de rondas desde Supabase, renderiza items y bindea navegación
     if (pageId === 'rondas') {
       var listEl = document.getElementById('rondas-list');
       if (listEl) {
@@ -303,10 +328,10 @@
             div.className = 'ronda-item';
             div.setAttribute('data-id', r.id);
             div.style.animationDelay = (i * 0.04) + 's';
-            var sub = (r.descripcion || '') + (r.fecha_hasta ? ' - Fecha Fin: ' + r.fecha_hasta : '');
+            var sub = escapeHtml(r.descripcion) + (r.fecha_hasta ? ' - Fecha Fin: ' + escapeHtml(r.fecha_hasta) : '');
             div.innerHTML =
               '<div class="ronda-info">' +
-                '<div class="ronda-id">id:' + r.id + ' CAPS: ' + (r.caps || '') + '</div>' +
+                '<div class="ronda-id">id:' + escapeHtml(String(r.id)) + ' CAPS: ' + escapeHtml(r.caps) + '</div>' +
                 '<div class="ronda-sub">' + sub + '</div>' +
               '</div>' +
               '<svg class="ronda-chevron" width="7" height="12" viewBox="0 0 7 12" fill="none">' +
@@ -322,7 +347,7 @@
       renderPieChart();
     }
 
-    // Relevamientos — load from Supabase filtered by ronda and agente
+    // Relevamientos — carga relevamientos filtrados por ronda_id + agente_id, renderiza lista con estado/ícono
     if (pageId === 'relevamientos' && params && params.ronda) {
       var rondaId = parseInt(params.ronda, 10);
       // Store current ronda ID globally for new relevamiento creation
@@ -336,7 +361,7 @@
 
       getAgente().then(function (agente) {
         if (!agente) return;
-        window.__currentAgenteId = agente.id;
+
 
         var listEl = document.getElementById('relev-list') || appEl.querySelector('.relev-list');
         if (!listEl) return;
@@ -367,8 +392,8 @@
             div.innerHTML =
               '<div class="relev-status ' + cssClass + '">' + icon + '</div>' +
               '<div class="relev-info">' +
-                '<div class="relev-name">' + (r.identi || 'Sin identificación') + '</div>' +
-                '<div class="relev-sub">Estado: ' + r.estado + '</div>' +
+                '<div class="relev-name">' + escapeHtml(r.identi || 'Sin identificación') + '</div>' +
+                '<div class="relev-sub">Estado: ' + escapeHtml(r.estado) + '</div>' +
               '</div>' +
               '<svg class="relev-chevron" width="7" height="12" viewBox="0 0 7 12" fill="none">' +
                 '<path d="M1 1l5 5-5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
@@ -383,164 +408,214 @@
 
     // Detalle — three modes: nuevo, lectura, edicion
     if (pageId === 'detalle') {
-      var modo = (params && params.modo) || '';
-      var guardarBtn = appEl.querySelector('.btn-guardar');
-      var btnWrap = guardarBtn ? guardarBtn.closest('.btn-wrap') : null;
+      var modo = (params && params.nuevo === '1') ? 'nuevo'
+               : (params && params.modo) ? params.modo
+               : 'lectura';
 
-      if (params && params.nuevo === '1') {
-        // ── Mode 1: nuevo — create blank relevamiento, editable
-        getAgente().then(function (agente) {
+      document.getElementById('app').setAttribute('data-mode', modo);
+
+      if (modo === 'nuevo') {
+        var nuevoRelevamientoId = null;
+
+        getAgente().then(function(agente) {
           if (!agente) return;
           var rondaId = window.__currentRondaId;
-          if (!rondaId) { console.error('No ronda ID for new relevamiento'); return; }
-          window.VisitData.createRelevamiento(rondaId, agente.id).then(function (result) {
+          if (!rondaId) return;
+          // TODO: En Angular, mover createRelevamiento a la acción de Guardar (OnInit no debe crear en DB).
+          // El relevamiento se crea aquí para que FormSync tenga un ID disponible de inmediato.
+          // Borradores huérfanos (usuario sale sin guardar) deben limpiarse periódicamente en el backend.
+          window.VisitData.createRelevamiento(rondaId, agente.id).then(function(result) {
             if (result.error) { console.error(result.error); return; }
-            window.FormSync.init(result.data.id, agente.id);
+            nuevoRelevamientoId = result.data.id;
+            window._descartarNuevoId = nuevoRelevamientoId;
+            window.FormSync.init(nuevoRelevamientoId, agente.id);
+          });
+
+          // Poblar header para nuevo: identi vacío, datos de ronda desde DB
+          var identiEl = document.getElementById('identi-val');
+          if (identiEl) identiEl.textContent = 'Sin identificación';
+
+          window.VisitData.getRondas().then(function(res) {
+            if (res.error || !res.data) return;
+            var r = res.data.find(function(ronda) { return ronda.id === parseInt(rondaId, 10); });
+            if (!r) return;
+            var set = function(id, val) { var el = document.getElementById(id); if (el) el.textContent = val || '—'; };
+            set('caps-val',     r.caps);
+            set('desc-val',     r.descripcion);
+            set('nom-val',      r.nombre);
+            set('idronda-val',  r.id);
+            set('fdesde-val',   r.fecha_desde);
+            set('fhasta-val',   r.fecha_hasta);
+            set('prov-val',     r.provincia);
+            set('region-val',   r.region);
+            set('loc-val',      r.localidad);
           });
         });
-        // Keep guardar button as-is for new relevamientos
-        if (guardarBtn) {
-          guardarBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            guardarBtn.disabled = true;
-            guardarBtn.textContent = 'Guardando…';
-            window.FormSync.saveAll().then(function () {
-              guardarBtn.textContent = 'Guardado ✓';
-              setTimeout(function () {
-                guardarBtn.disabled = false;
-                guardarBtn.textContent = 'Completar y Guardar';
-              }, 2000);
+
+        /**
+         * Elimina el relevamiento borrador de la DB, limpia la entrada del navigation stack,
+         * y navega de vuelta a la lista de relevamientos de la ronda actual.
+         */
+        function descartarNuevo() {
+          window._descartarNuevoId = null; // prevent double-delete from onHashChange
+          var rondaId = window.__currentRondaId;
+          var destino = rondaId ? 'relevamientos?ronda=' + rondaId : 'rondas';
+          if (nuevoRelevamientoId) {
+            window.VisitData.deleteRelevamiento(nuevoRelevamientoId).then(function() {
+              isGoingBack = true;
+              navigationStack.pop();
+              window.location.hash = destino;
+            });
+          } else {
+            isGoingBack = true;
+            navigationStack.pop();
+            window.location.hash = destino;
+          }
+        }
+        window._descartarNuevo = descartarNuevo;
+
+        var btnDescartar = document.getElementById('btn-descartar');
+        if (btnDescartar) {
+          btnDescartar.addEventListener('click', function() {
+            showDetallePopup(
+              '¿Descartar relevamiento?',
+              'El relevamiento no será guardado.',
+              'Quedarme', 'Descartar',
+              descartarNuevo
+            );
+          });
+        }
+
+        var btnGuardarNuevo = document.getElementById('btn-guardar-nuevo');
+        if (btnGuardarNuevo) {
+          btnGuardarNuevo.addEventListener('click', function() {
+            btnGuardarNuevo.style.opacity = '0.5';
+            btnGuardarNuevo.style.pointerEvents = 'none';
+            window.FormSync.saveAll().then(function() {
+              window._descartarNuevoId = null; // saved — don't delete on exit
+              var rondaId = window.__currentRondaId;
+              isGoingBack = true;
+              navigationStack.pop();
+              navigateTo('relevamientos', rondaId ? 'ronda=' + rondaId : '');
+              showToast('Relevamiento guardado correctamente');
             });
           });
         }
+      }
 
-      } else if (params && params.relevamiento && modo === 'lectura') {
-        // ── Mode 2: lectura — read-only view
+      /**
+       * Obtiene el relevamiento completo (con join a rondas) y popula las celdas
+       * del info-matrix del header: CAPS, descripción, fechas, provincia, etc.
+       * @param {number} relevId - ID del relevamiento a consultar.
+       */
+      function poblarHeaderDetalle(relevId) {
+        var identiEl = document.getElementById('identi-val');
+        if (identiEl) {
+          identiEl.textContent = 'Cargando';
+          identiEl.style.fontStyle = 'italic';
+          identiEl.style.color = 'var(--text-soft)';
+        }
+
+        window.VisitData.getRelevamientoCompleto(relevId).then(function(result) {
+          if (result.error || !result.data) return;
+          var d = result.data;
+
+          if (identiEl) {
+            identiEl.style.fontStyle = '';
+            identiEl.style.color = '';
+            identiEl.textContent = d.identi || 'Sin identificación';
+          }
+
+          if (d.rondas) {
+            var r = Array.isArray(d.rondas) ? d.rondas[0] : d.rondas;
+            if (r) {
+              var set = function(id, val) { var el = document.getElementById(id); if (el) el.textContent = val || '—'; };
+              set('caps-val',     r.caps);
+              set('desc-val',     r.descripcion);
+              set('nom-val',      r.nombre);
+              set('idronda-val',  r.id);
+              set('fdesde-val',   r.fecha_desde);
+              set('fhasta-val',   r.fecha_hasta);
+              set('prov-val',     r.provincia);
+              set('region-val',   r.region);
+              set('loc-val',      r.localidad);
+            }
+          }
+        });
+      }
+
+      if (modo === 'lectura') {
         var relevId = parseInt(params.relevamiento, 10);
-        getAgente().then(function (agente) {
+        getAgente().then(function(agente) {
           if (!agente) return;
           window.FormSync.init(relevId, agente.id);
+          poblarHeaderDetalle(relevId);
         });
 
-        // Disable all form inputs after data loads
-        setTimeout(function () {
-          appEl.querySelectorAll('input, textarea, select').forEach(function (el) {
-            el.disabled = true;
-            el.style.opacity = '0.7';
+        var btnEditar = document.getElementById('btn-editar-relev');
+        if (btnEditar) {
+          btnEditar.addEventListener('click', function() {
+            navigateTo('detalle', 'relevamiento=' + relevId + '&modo=edicion');
           });
-          appEl.querySelectorAll('.dropdown-trigger, .custom-dropdown').forEach(function (el) {
-            el.style.pointerEvents = 'none';
-            el.style.opacity = '0.7';
-          });
-        }, 600);
+        }
 
-        // Hide guardar button, add bottom padding, show fixed lectura actions
-        if (btnWrap) btnWrap.style.display = 'none';
-        var scrollBody = appEl.querySelector('.scroll-body');
-        if (scrollBody) scrollBody.style.paddingBottom = '80px';
-
-        var actionsDiv = document.createElement('div');
-        actionsDiv.style.cssText = 'position:absolute;bottom:0;left:0;right:0;padding:16px 52px 24px;background:linear-gradient(to bottom,transparent,var(--cream) 30%);display:flex;justify-content:space-between;align-items:center;z-index:50;';
-
-        var editLink = document.createElement('span');
-        editLink.textContent = 'Editar';
-        editLink.style.cssText = 'font-family:Montserrat,sans-serif;font-size:13px;font-weight:600;color:var(--steel);cursor:pointer;transition:opacity 0.2s;';
-        editLink.addEventListener('click', function () {
-          navigateTo('detalle', 'relevamiento=' + relevId + '&modo=edicion');
-        });
-
-        var deleteLink = document.createElement('span');
-        deleteLink.textContent = 'ELIMINAR';
-        deleteLink.style.cssText = 'font-family:Montserrat,sans-serif;font-size:12px;font-weight:300;color:#C0392B;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;transition:opacity 0.2s;';
-        deleteLink.addEventListener('click', function () {
-          showDetallePopup(
-            '¿Eliminar relevamiento?',
-            'Esta acción no se puede deshacer. El relevamiento y todos sus datos serán eliminados permanentemente.',
-            'Cancelar', 'Eliminar',
-            function () {
-              window.VisitData.deleteRelevamiento(relevId).then(function (result) {
-                if (result.error) {
-                  showToast('Error: ' + result.error.message);
-                  return;
-                }
-                var rondaId = window.__currentRondaId;
-                if (rondaId) {
+        var btnEliminar = document.getElementById('btn-eliminar-relev');
+        if (btnEliminar) {
+          btnEliminar.addEventListener('click', function() {
+            showDetallePopup(
+              '¿Eliminar relevamiento?',
+              'Esta acción no se puede deshacer.',
+              'Cancelar', 'Eliminar',
+              function() {
+                window.VisitData.deleteRelevamiento(relevId).then(function(result) {
+                  if (result.error) { showToast('Error: ' + result.error.message); return; }
+                  var rondaId = window.__currentRondaId;
                   isGoingBack = true;
                   navigationStack.pop();
-                  navigateTo('relevamientos', 'ronda=' + rondaId);
-                } else {
-                  navigateTo('rondas');
-                }
-                showToast('Relevamiento eliminado');
-              });
-            }
-          );
-        });
-
-        actionsDiv.appendChild(editLink);
-        actionsDiv.appendChild(deleteLink);
-
-        // Inject into .phone (not scroll-body) for fixed positioning
-        var phoneEl = appEl.querySelector('.phone');
-        if (phoneEl) {
-          phoneEl.appendChild(actionsDiv);
+                  navigateTo('relevamientos', rondaId ? 'ronda=' + rondaId : '');
+                  showToast('Relevamiento eliminado');
+                });
+              }
+            );
+          });
         }
+      }
 
-      } else if (params && params.relevamiento && modo === 'edicion') {
-        // ── Mode 3: edicion — editable with save/discard
+      if (modo === 'edicion') {
         var relevId = parseInt(params.relevamiento, 10);
-        getAgente().then(function (agente) {
+        getAgente().then(function(agente) {
           if (!agente) return;
           window.FormSync.init(relevId, agente.id);
+          poblarHeaderDetalle(relevId);
         });
 
-        // Hide guardar button, add bottom padding, show fixed edicion actions
-        if (btnWrap) btnWrap.style.display = 'none';
-        var scrollBody = appEl.querySelector('.scroll-body');
-        if (scrollBody) scrollBody.style.paddingBottom = '80px';
-
-        var actionsDiv = document.createElement('div');
-        actionsDiv.style.cssText = 'position:absolute;bottom:0;left:0;right:0;padding:16px 52px 24px;background:linear-gradient(to bottom,transparent,var(--cream) 30%);display:flex;justify-content:space-between;align-items:center;z-index:50;';
-
-        var exitLink = document.createElement('span');
-        exitLink.textContent = 'Salir sin guardar';
-        exitLink.style.cssText = 'font-family:Montserrat,sans-serif;font-size:13px;font-weight:400;color:var(--text-soft);cursor:pointer;transition:opacity 0.2s;';
-        exitLink.addEventListener('click', function () {
-          showDetallePopup(
-            '¿Salir sin guardar?',
-            'Los cambios no guardados se perderán.',
-            'Quedarme', 'Salir',
-            function () {
-              navigateTo('detalle', 'relevamiento=' + relevId + '&modo=lectura');
-            }
-          );
-        });
-
-        var saveLink = document.createElement('span');
-        saveLink.textContent = 'GUARDAR CAMBIOS';
-        saveLink.style.cssText = 'font-family:Montserrat,sans-serif;font-size:12px;font-weight:600;color:var(--steel);cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;transition:opacity 0.2s;';
-        saveLink.addEventListener('click', function () {
-          saveLink.style.opacity = '0.5';
-          saveLink.style.pointerEvents = 'none';
-          window.FormSync.saveAll().then(function () {
-            navigateTo('detalle', 'relevamiento=' + relevId + '&modo=lectura');
-            showToast('Cambios guardados correctamente');
+        var btnSalir = document.getElementById('btn-salir-edicion');
+        if (btnSalir) {
+          btnSalir.addEventListener('click', function() {
+            showDetallePopup(
+              '¿Salir sin guardar?',
+              'Los cambios no guardados se perderán. El relevamiento se mantendrá como estaba.',
+              'Quedarme', 'Salir',
+              function() { navigateTo('detalle', 'relevamiento=' + relevId + '&modo=lectura'); }
+            );
           });
-        });
-
-        actionsDiv.appendChild(exitLink);
-        actionsDiv.appendChild(saveLink);
-
-        // Inject into .phone for fixed positioning
-        var phoneEl = appEl.querySelector('.phone');
-        if (phoneEl) {
-          phoneEl.appendChild(actionsDiv);
         }
 
-      } else if (params && params.relevamiento) {
-        // Fallback: no modo specified — treat as lectura
+        var btnGuardarEdicion = document.getElementById('btn-guardar-edicion');
+        if (btnGuardarEdicion) {
+          btnGuardarEdicion.addEventListener('click', function() {
+            btnGuardarEdicion.style.opacity = '0.5';
+            btnGuardarEdicion.style.pointerEvents = 'none';
+            window.FormSync.saveAll().then(function() {
+              navigateTo('detalle', 'relevamiento=' + relevId + '&modo=lectura');
+              showToast('Cambios guardados correctamente');
+            });
+          });
+        }
+      }
+
+      if (params && params.relevamiento && !params.modo && params.nuevo !== '1') {
         navigateTo('detalle', 'relevamiento=' + params.relevamiento + '&modo=lectura');
-        return;
       }
     }
 
@@ -588,6 +663,7 @@
           }
           getAgente().then(function (agente) {
             if (!agente) return;
+            console.log('[TyC] aceptando para agente id:', agente.id, 'auth_uid:', agente.auth_uid);
             window.VisitData.acceptTyc(agente.id).then(function (result) {
               if (result.error) {
                 var popupMsg = popupOv ? popupOv.querySelector('.popup-msg') : null;
@@ -697,15 +773,8 @@
 
           if (window.renderTablaUsuarios) window.renderTablaUsuarios(usuarios);
 
-          if (nivel === 'supervisor') {
-            var zonasMap = {};
-            usuarios.forEach(function(u) {
-              if (u.zona) zonasMap[u.zona] = (zonasMap[u.zona] || 0) + 1;
-            });
-            var zonasArr = Object.keys(zonasMap).map(function(z) {
-              return { zona: z, count: zonasMap[z] };
-            });
-            if (window.renderTablaZonas) window.renderTablaZonas(zonasArr);
+          if (nivel === 'supervisor' && window.initZonasPanel) {
+            window.initZonasPanel(agente);
           }
 
           if (nivel === 'admin_provincial' && window.initEstablecimientos) {
@@ -757,6 +826,11 @@
   }
 
   // ── Reportes — full initialization ──────────────────────────────────────
+  /**
+   * Inicializa el cubo de reportes: define mapeos campo→columna CSV por módulo,
+   * flattenCubo() transforma joins anidados de Supabase en filas planas para exportar,
+   * y conecta los filtros en cascada (provincia→localidad→ronda→agente) según nivel_acceso.
+   */
   function initReportes() {
     // Limpiar estado anterior para forzar re-render limpio
     window._reporteAgente   = null;
@@ -828,6 +902,15 @@
       { key: 'pacientes',        code: '30', desc: 'Módulo Pacientes', modulo: 'PACIENTE',  fields: PACIENTES_FIELDS }
     ];
 
+    /**
+     * Transforma la respuesta anidada de Supabase (relevamiento → módulos → campos)
+     * en filas planas para export CSV. Genera una fila por módulo por relevamiento;
+     * para pacientes genera múltiples filas (una por paciente). Filtra por rango de fechas.
+     * @param {Array} rawData - Relevamientos con joins a módulos y agentes.
+     * @param {string} fechaDesde - Fecha inicio filtro (yyyy-mm-dd) o falsy.
+     * @param {string} fechaHasta - Fecha fin filtro (yyyy-mm-dd) o falsy.
+     * @returns {Array<Object>} Filas planas con columnas base + campos del módulo.
+     */
     function flattenCubo(rawData, fechaDesde, fechaHasta) {
       var rows = [];
       rawData.forEach(function (rel) {
@@ -986,11 +1069,11 @@
 
           var cols = Object.keys(window.reporteData[0]);
           document.getElementById('preview-head').innerHTML =
-            '<tr>' + cols.map(function(c) { return '<th>' + c + '</th>'; }).join('') + '</tr>';
+            '<tr>' + cols.map(function(c) { return '<th>' + escapeHtml(c) + '</th>'; }).join('') + '</tr>';
           document.getElementById('preview-body').innerHTML =
             window.reporteData.slice(0, 50).map(function(r) {
               return '<tr>' + cols.map(function(c) {
-                var v = r[c]; return '<td>' + (v != null ? v : '') + '</td>';
+                var v = r[c]; return '<td>' + escapeHtml(v != null ? String(v) : '') + '</td>';
               }).join('') + '</tr>';
             }).join('');
 
@@ -1098,10 +1181,10 @@
           return;
         } else if (qp.nuevo === '1') {
           showDetallePopup(
-            '¿Salir sin guardar?',
-            'Los cambios no guardados se perderán. El relevamiento quedará guardado como borrador.',
-            'Quedarme', 'Salir',
-            goHome
+            '¿Descartar relevamiento?',
+            'El relevamiento no será guardado.',
+            'Quedarme', 'Descartar',
+            function() { if (window._descartarNuevo) window._descartarNuevo(); else goHome(); }
           );
           return;
         }
@@ -1146,10 +1229,10 @@
             );
           } else if (qp.nuevo === '1') {
             showDetallePopup(
-              '¿Salir sin guardar?',
-              'Los cambios no guardados se perderán. El relevamiento quedará guardado como borrador.',
-              'Quedarme', 'Salir',
-              goBackToList
+              '¿Descartar relevamiento?',
+              'El relevamiento no será guardado.',
+              'Quedarme', 'Descartar',
+              function() { if (window._descartarNuevo) window._descartarNuevo(); else goBackToList(); }
             );
           } else {
             goBackToList();
@@ -1279,7 +1362,6 @@
     }
 
     if (pageId === 'administracion') {
-      wireAdminButtons();
     }
 
     // Ronda items — navigate to relevamientos
@@ -1405,9 +1487,6 @@
     }
   }
 
-  // ── Admin page button wiring (HTML wires internally) ─────────────────────
-  function wireAdminButtons() {}
-
   // ── Ronda item wiring ─────────────────────────────────────────────────────
   function wireRondaItems() {
     var items = appEl.querySelectorAll('.ronda-item');
@@ -1494,7 +1573,7 @@
     overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999;animation:fadeInOverlay 0.2s ease;';
 
     var card = document.createElement('div');
-    card.style.cssText = 'background:#EDEAE4;border-radius:16px;padding:28px 24px 20px;width:280px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2);';
+    card.style.cssText = 'background:#EDEAE4;border-radius:12px;padding:28px 24px 20px;width:300px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2);';
 
     var p = document.createElement('p');
     p.style.cssText = 'font-family:Montserrat,sans-serif;font-size:14px;font-weight:500;color:#2C2C2C;margin-bottom:20px;';
@@ -1652,10 +1731,13 @@
     }, 3000);
   }
 
-  // ── Block browser back from root screens (#login, #menu) ────────────────
-  // When mounting a root screen, push a null state and attach a popstate
-  // listener that re-pushes if the user is still on that screen.
-  // The listener removes itself once the user navigates away.
+  /*
+   * Sistema de back-guard: impide que el botón Atrás del navegador saque al usuario
+   * de pantallas raíz (login, menu, menu-admin). Usa pushState para agregar una entrada
+   * fantasma al historial y un listener popstate que la re-inserta si el usuario sigue
+   * en la misma pantalla. _backGuardCleanup almacena la función de limpieza del listener
+   * activo; se invoca automáticamente al instalar un nuevo guard o al navegar fuera.
+   */
   var ROOT_SCREENS = { login: true, menu: true, 'menu-admin': true };
   var _backGuardCleanup = null;
 
@@ -1685,6 +1767,18 @@
 
   // ── Handle hash changes with session guard ────────────────────────────────
   function onHashChange() {
+    /*
+     * Limpieza de huérfanos: si el usuario sale de detalle?nuevo=1 sin guardar
+     * (ej: navegando con Home o cambiando el hash manualmente), el borrador creado
+     * en DB se elimina automáticamente usando el ID almacenado en _descartarNuevoId.
+     */
+    if (currentPage === 'detalle' && window._descartarNuevoId) {
+      var orphanId = window._descartarNuevoId;
+      window._descartarNuevoId = null;
+      window._descartarNuevo = null;
+      window.VisitData.deleteRelevamiento(orphanId);
+    }
+
     var route = parseHash();
     if (!ROUTES[route.page]) {
       route.page = DEFAULT_ROUTE;
@@ -1692,21 +1786,23 @@
     var queryParams = parseQuery(route.query);
     var newFullHash = route.query ? route.page + '?' + route.query : route.page;
 
-    // ── Stack management (before transition) ──────────────────────────────
+    /*
+     * Gestión del navigationStack (antes de la transición):
+     * - isGoingBack: el stack ya fue popeado por quien inició el back, solo resetear el flag.
+     * - perfil: es pantalla lateral, guarda el hash de retorno sin modificar el stack.
+     * - pantallas raíz (login/menu/menu-admin): resetean stack y profileReturnHash.
+     * - navegación forward normal: pushea la pantalla actual al stack para permitir volver.
+     */
     if (isGoingBack) {
-      // Back navigation — stack was already popped, just update current tracking
       isGoingBack = false;
     } else if (route.page === 'perfil') {
-      // Perfil is lateral — save where we came from but don't touch the stack
       if (currentFullHash && currentPage !== 'perfil') {
         profileReturnHash = currentFullHash;
       }
     } else if (route.page === 'login' || route.page === 'menu' || route.page === 'menu-admin') {
-      // Login and menu reset everything — these are "root" screens
       navigationStack = [];
       profileReturnHash = null;
     } else {
-      // Normal forward navigation — push previous page to stack
       if (currentFullHash && currentPage && currentPage !== 'perfil' && currentPage !== 'login') {
         navigationStack.push(currentFullHash);
       }

@@ -2,56 +2,13 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=390, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>VisitAPS – Editar Usuario</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --navy:       #1B2A4A;
-    --navy-light: #243660;
-    --gold:       #C9A84C;
-    --gold-light: #D9BC72;
-    --cream:      #EDEAE4;
-    --cream-dark: #DDD9D2;
-    --text-main:  #2C2C2C;
-    --text-soft:  #7A7672;
-    --gray-btn:   #8A8580;
-    --steel:      #5A7290;
-    --steel-light:#6B84A3;
-  }
-
-  html, body {
-    width: 100%; height: 100dvh;
-    margin: 0 auto;
-    background: #C8C4BC;
-    font-family: 'Montserrat', sans-serif;
-    display: flex; justify-content: center;
-  }
-
-  .phone {
-    width: 100%; max-width: 390px;
-    height: 100dvh;
-    background: var(--cream);
-    display: flex; flex-direction: column;
-    align-items: center;
-    position: relative; overflow-x: hidden;
-  }
-
-  .phone::before {
-    content: '';
-    position: absolute;
-    top: -60px; left: 50%;
-    transform: translateX(-50%);
-    width: 300px; height: 300px;
-    background: radial-gradient(circle, rgba(201,168,76,0.10) 0%, transparent 70%);
-    pointer-events: none; z-index: 0;
-  }
-
   .top-bar {
     width: 100%; height: 4px; flex-shrink: 0;
-    background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 50%, var(--navy) 100%);
+    background: var(--gold);
     position: relative; z-index: 1;
   }
 
@@ -202,9 +159,9 @@
     letter-spacing: 0.06em; text-transform: uppercase;
     flex-shrink: 0;
   }
-  .nivel-badge.agente           { background: rgba(90,114,144,0.15); color: var(--steel); }
-  .nivel-badge.supervisor       { background: rgba(80,183,178,0.15); color: #2a9490; }
-  .nivel-badge.admin_provincial { background: rgba(201,168,76,0.15); color: #a07a1a; }
+  .nivel-badge.agente           { background: var(--badge-steel-bg); color: var(--steel); }
+  .nivel-badge.supervisor       { background: var(--badge-teal-bg);  color: var(--badge-teal-text); }
+  .nivel-badge.admin_provincial { background: var(--badge-gold-bg);  color: var(--badge-gold-text); }
 
   /* Custom dropdown */
   .custom-dropdown { position: relative; width: 100%; }
@@ -245,31 +202,6 @@
   #dd-portal .dropdown-option:hover { background: rgba(201,168,76,0.08); }
   #dd-portal .dropdown-option.selected { font-weight: 600; }
 
-  /* Footer */
-  .footer-actions {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    padding: 16px 52px 24px;
-    background: linear-gradient(to bottom, transparent, var(--cream) 30%);
-    display: flex; justify-content: space-between; align-items: center;
-    z-index: 50;
-  }
-  .footer-btn-cancel {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 13px; font-weight: 500;
-    color: var(--gray-btn);
-    cursor: pointer; transition: opacity 0.2s;
-  }
-  .footer-btn-cancel:hover { opacity: 0.7; }
-  .footer-btn-guardar {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 12px; font-weight: 600;
-    color: var(--steel);
-    cursor: pointer; letter-spacing: 0.05em;
-    text-transform: uppercase;
-    transition: opacity 0.2s;
-  }
-  .footer-btn-guardar:hover { opacity: 0.7; }
 
   @keyframes fadeDown {
     from { opacity: 0; transform: translateY(-10px); }
@@ -285,7 +217,7 @@
 </style>
 </head>
 <body>
-<div class="phone">
+<div class="bg-glow"></div>
   <div class="top-bar"></div>
 
   <div class="top-nav">
@@ -403,14 +335,12 @@
     </div>
   </div>
 
-  <!-- Footer -->
-  <div class="footer-actions">
-    <span class="footer-btn-cancel" id="btn-cancelar">Cancelar</span>
-    <span class="footer-btn-guardar" id="btn-guardar">GUARDAR CAMBIOS</span>
+  <div class="action-bar">
+    <button class="action-bar-btn danger" id="btn-cancelar">Cancelar</button>
+    <button class="action-bar-btn primary" id="btn-guardar">GUARDAR CAMBIOS</button>
   </div>
 
   <div id="dd-portal"></div>
-</div>
 
 <script>
 // ── Dropdowns con portal ──────────────────────────────────────────────────────
@@ -443,7 +373,7 @@ function closePortal() {
 
 function positionPortal(trigger) {
   var p         = getPortal();
-  var phone     = document.querySelector('.phone');
+  var phone     = document.getElementById('app');
   var phoneRect = phone.getBoundingClientRect();
   var trigRect  = trigger.getBoundingClientRect();
   var maxH      = 200;

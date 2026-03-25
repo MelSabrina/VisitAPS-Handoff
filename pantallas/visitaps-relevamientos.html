@@ -2,47 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=390, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>VisitAPS – Relevamientos</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html, body {
-    width: 100%;
-    min-height: 100vh;
-    margin: 0 auto;
-    background: #C8C4BC;
-    font-family: 'Montserrat', sans-serif;
-    display: flex;
-    justify-content: center;
-  }
-
-  .phone {
-    width: 100%;
-    max-width: 390px;
-    height: 100vh;
-    background: var(--cream);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  :root {
-    --navy:       #1B2A4A;
-    --navy-light: #243660;
-    --gold:       #C9A84C;
-    --gold-light: #D9BC72;
-    --cream:      #EDEAE4;
-    --cream-dark: #DDD9D2;
-    --text-main:  #2C2C2C;
-    --text-soft:  #7A7672;
-    --gray-btn:   #8A8580;
-    --steel:      #5A7290;
-    --teal:       #50b7b2;
-  }
 
   
 
@@ -50,7 +13,7 @@
 
   .top-bar {
     width: 100%; height: 4px;
-    background: linear-gradient(90deg, #1B2A4A 0%, #C9A84C 50%, #1B2A4A 100%);
+    background: var(--gold);
     flex-shrink: 0;
   }
 
@@ -94,21 +57,23 @@
   .status-legend {
     width: 100%; padding: 28px 52px 0;
     display: flex; align-items: center; gap: 16px;
+    justify-content: center;
     flex-shrink: 0;
     animation: fadeIn 0.4s 0.1s ease both;
   }
   .legend-badge {
     display: flex; align-items: center; gap: 5px;
-    font-size: 10.5px; font-weight: 500; color: var(--text-soft);
+    font-size: 11.5px; font-weight: 500; color: var(--text-soft);
   }
   .badge-icon {
-    width: 18px; height: 18px; border-radius: 50%;
+    width: 22px; height: 22px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
   .badge-icon.enviado   { background: var(--navy); }
   .badge-icon.no-env    { background: var(--gold); }
   .badge-icon.borrador  { background: var(--steel); }
+  .badge-icon.borrador svg { transform: translateY(-1px); }
 
   /* Search */
   .search-wrap {
@@ -224,10 +189,10 @@
     from { opacity: 0; }
     to   { opacity: 1; }
   }
+  .nav-icon:hover { opacity: 1 !important; }
 </style>
 </head>
 <body>
-<div class="phone">
   <div class="top-bar"></div>
 
 
@@ -239,13 +204,13 @@
       Atras
     </button>
     <div style="display:flex;gap:12px;align-items:center;">
-      <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.55">
+      <div class="nav-icon" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;">
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
           <circle cx="11" cy="7.5" r="3.5" stroke="#1B2A4A" stroke-width="1.5"/>
           <path d="M4 19.5c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
       </div>
-      <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.55">
+      <div class="nav-icon" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.55;transition:opacity 0.2s;">
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
           <path d="M9 3H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round"/>
           <path d="M15 15l4-4-4-4M19 11H9" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -279,7 +244,7 @@
     </div>
     <div class="legend-badge">
       <div class="badge-icon borrador">
-        <svg width="11" height="12" viewBox="0 0 11 12" fill="none">
+        <svg width="10" height="11" viewBox="0 0 11 12" fill="none">
           <rect x="1" y="1" width="9" height="10" rx="1.5" stroke="#fff" stroke-width="1.3"/>
           <line x1="3" y1="4" x2="8" y2="4" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
           <line x1="3" y1="6.5" x2="8" y2="6.5" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
@@ -306,8 +271,6 @@
       <path d="M10 4v12M4 10h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
     </svg>
   </button>
-
-</div>
 
 </body>
 </html>

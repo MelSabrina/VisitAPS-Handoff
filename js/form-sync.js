@@ -130,42 +130,80 @@
 
   // ── Write a field value to DOM ────────────────────────────────────────────
 
+  /**
+   * Escribe un valor en el campo editable Y en su contraparte readonly.
+   * Extrae un baseId numérico quitando prefijos (date-text-, dd-, f) del fieldId,
+   * ya que los IDs readonly usan solo el código numérico (ej. readonly-10100).
+   * @param {string} fieldId - ID del campo editable en el DOM
+   * @param {object} fieldDef - Definición del campo ({col, type})
+   * @param {*} value - Valor a escribir
+   */
   function writeField(fieldId, fieldDef, value) {
     if (value === null || value === undefined) return;
     var el;
+
+    // Extraer ID base para readonly: quitar prefijos dd-, f, date-text-
+    var baseId = fieldId
+      .replace(/^date-text-/, '')
+      .replace(/^dd-/, '')
+      .replace(/^f/, '');
 
     switch (fieldDef.type) {
       case 'text':
       case 'number':
         el = document.getElementById(fieldId);
         if (el) el.value = value;
+        var roEl = document.getElementById('input-readonly-f' + baseId);
+        if (roEl) roEl.textContent = value;
         break;
 
       case 'dropdown':
         var trigger = document.querySelector('#' + CSS.escape(fieldId) + ' .dropdown-trigger');
-        if (trigger) {
-          trigger.textContent = value;
-          trigger.classList.add('selected');
-        }
+        if (trigger) { trigger.textContent = value; trigger.classList.add('selected'); }
+        var roDD = document.getElementById('readonly-' + baseId);
+        if (roDD) roDD.textContent = value;
         break;
 
       case 'multiselect':
-        // For multiselect, display the values in the trigger
-        var msTrigger = document.querySelector('#' + CSS.escape(fieldId) + ' .dropdown-trigger');
-        if (msTrigger && Array.isArray(value)) {
-          msTrigger.textContent = value.join(', ');
+        // Escribe el texto separado por comas en ms-display-{baseId} (span visible),
+        // y sincroniza el estado visual (checked/svg) de cada opción en dl-{baseId}.
+        var msText = Array.isArray(value) ? value.join(', ') : (value || '');
+
+        // Escribir en el span de display directamente por ID (más confiable que querySelector)
+        var msDisplayEl = document.getElementById('ms-display-' + baseId);
+        if (msDisplayEl) msDisplayEl.textContent = msText || 'Selecciona';
+
+        // Marcar opciones como checked en el DOM fuente
+        if (Array.isArray(value) && value.length > 0) {
+          var srcList = document.getElementById('dl-' + baseId);
+          if (srcList) {
+            srcList.querySelectorAll('.ms-option').forEach(function(opt) {
+              // Obtener solo el texto del label (ignorar el checkbox div)
+              var checkboxDiv = opt.querySelector('.ms-checkbox');
+              var label = opt.textContent.replace(checkboxDiv ? checkboxDiv.textContent : '', '').trim();
+              var isChecked = value.indexOf(label) !== -1;
+              opt.classList.toggle('checked', isChecked);
+              var svg = opt.querySelector('svg');
+              if (svg) svg.style.display = isChecked ? 'block' : 'none';
+            });
+          }
         }
+
+        // Readonly
+        var roMS = document.getElementById('readonly-' + baseId);
+        if (roMS) roMS.textContent = msText || '—';
         break;
 
       case 'date':
         el = document.getElementById(fieldId);
         if (el && value) {
-          // Convert yyyy-mm-dd to dd/mm/yyyy for display
           var parts = value.split('-');
           if (parts.length === 3) {
             var display = parts[2] + '/' + parts[1] + '/' + parts[0];
             el.value = display;
             el.textContent = display;
+            var roDt = document.getElementById('date-readonly-' + baseId);
+            if (roDt) roDt.textContent = display;
           }
         }
         break;
@@ -235,6 +273,8 @@
     });
   }
 
+  // Construye el fieldId de cada campo del paciente: prefijo según tipo
+  // (f para text/number, date-text- para date, dd- para dropdown) + baseId + sufijo -pN.
   function savePaciente(nro) {
     if (!currentRelevamientoId) return;
     var suffix = '-p' + nro;
@@ -287,7 +327,11 @@
       }
     });
 
-    // Listen for dropdown selections via MutationObserver on trigger text changes
+    /*
+     * MutationObserver para dropdowns custom: estos no disparan eventos nativos
+     * de input al cambiar el texto del trigger. El observer detecta mutaciones
+     * childList/characterData en .custom-dropdown y rutea al save del módulo correcto.
+     */
     var observer = new MutationObserver(function (mutations) {
       mutations.forEach(function (mutation) {
         if (mutation.type !== 'childList' && mutation.type !== 'characterData') return;
@@ -317,30 +361,32 @@
 
   // ── Populate all fields from a complete relevamiento ──────────────────────
 
+  /**
+   * Popula todos los campos del formulario con datos de Supabase.
+   * Supabase devuelve relaciones 1:1 como arrays de un elemento ([{...}]),
+   * por eso se desempaqueta con Array.isArray check antes de pasarlo a populateModule.
+   * Los pacientes se ordenan por nro y se crean dinámicamente con agregarPaciente().
+   * @param {Object} data - Relevamiento completo con joins (modulo_visita, modulo_vivienda, etc.)
+   */
   function populateAll(data) {
     if (!data) return;
 
-    // Populate módulo visita
-    if (data.modulo_visita && data.modulo_visita.length > 0) {
-      populateModule(VISITA_FIELDS, data.modulo_visita[0]);
-    }
+    // Supabase devuelve relaciones como arrays — tomar el primer elemento
+    var mv = data.modulo_visita;
+    if (mv) populateModule(VISITA_FIELDS, Array.isArray(mv) ? mv[0] : mv);
 
-    // Populate módulo vivienda
-    if (data.modulo_vivienda && data.modulo_vivienda.length > 0) {
-      populateModule(VIVIENDA_FIELDS, data.modulo_vivienda[0]);
-    }
+    var mvi = data.modulo_vivienda;
+    if (mvi) populateModule(VIVIENDA_FIELDS, Array.isArray(mvi) ? mvi[0] : mvi);
 
-    // Populate módulo sistemas
-    if (data.modulo_sistemas && data.modulo_sistemas.length > 0) {
-      populateModule(SISTEMAS_FIELDS, data.modulo_sistemas[0]);
-    }
+    var ms = data.modulo_sistemas;
+    if (ms) populateModule(SISTEMAS_FIELDS, Array.isArray(ms) ? ms[0] : ms);
 
     // Populate patients
     if (data.pacientes && data.pacientes.length > 0) {
       data.pacientes.sort(function (a, b) { return a.nro - b.nro; });
       data.pacientes.forEach(function (pac) {
         // First patient is already in the DOM, others need to be added
-        if (pac.nro > 1 && typeof window.agregarPaciente === 'function') {
+        if (typeof window.agregarPaciente === 'function') {
           window.agregarPaciente();
         }
         var suffix = '-p' + pac.nro;
@@ -440,7 +486,7 @@
 
     /**
      * Get the current relevamiento ID
-     * @returns {number}
+     * @returns {number|null}
      */
     getRelevamientoId: function () {
       return currentRelevamientoId;

@@ -2,44 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=390, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>VisitAPS – Administración</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --navy:       #1B2A4A;
-    --navy-light: #243660;
-    --gold:       #C9A84C;
-    --gold-light: #D9BC72;
-    --cream:      #EDEAE4;
-    --cream-dark: #DDD9D2;
-    --steel:      #5A7290;
-    --steel-light:#6B84A3;
-    --teal:       #50b7b2;
-    --text-main:  #2C2C2C;
-    --text-soft:  #7A7672;
-    --gray-btn:   #8A8580;
-  }
-
-  html, body {
-    width: 100%; height: 100dvh;
-    margin: 0 auto;
-    background: #C8C4BC;
-    font-family: 'Montserrat', sans-serif;
-    display: flex; justify-content: center;
-  }
-
-  .phone {
-    width: 100%; max-width: 390px;
-    height: 100dvh;
-    background: var(--cream);
-    display: flex; flex-direction: column;
-    align-items: center;
-    position: relative; overflow: hidden;
-  }
-
   .top-bar {
     width: 100%; height: 4px; flex-shrink: 0;
     background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 50%, var(--navy) 100%);
@@ -199,9 +165,9 @@
     letter-spacing: 0.06em; text-transform: uppercase;
     white-space: nowrap;
   }
-  .badge-agente     { background: rgba(90,114,144,0.15); color: var(--steel); }
-  .badge-supervisor { background: rgba(80,183,178,0.15); color: #2a9490; }
-  .badge-admin      { background: rgba(201,168,76,0.15); color: #a07a1a; }
+  .badge-agente     { background: var(--badge-steel-bg); color: var(--steel); }
+  .badge-supervisor { background: var(--badge-teal-bg);  color: var(--badge-teal-text); }
+  .badge-admin      { background: var(--badge-gold-bg);  color: var(--badge-gold-text); }
 
   /* ── Establecimientos ───────────────────────────────────────────── */
   .est-provincia-row {
@@ -335,7 +301,8 @@
 
   /* ── Bottom sheet base ──────────────────────────────────────────── */
   .bs-backdrop {
-    position: absolute; inset: 0;
+    position: fixed;
+    inset: 0;
     background: rgba(27,42,74,0.35);
     z-index: 200;
     opacity: 0; pointer-events: none;
@@ -344,17 +311,20 @@
   .bs-backdrop.open { opacity: 1; pointer-events: all; }
 
   .bs-sheet {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    width: 100%;
+    max-width: 600px;
     background: #F6EDE0;
     border-radius: 20px 20px 0 0;
     z-index: 201;
-    transform: translateY(100%);
     transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
     max-height: 82dvh;
     display: flex; flex-direction: column;
   }
-  .bs-sheet.open { transform: translateY(0); }
+  .bs-sheet.open { transform: translateX(-50%) translateY(0); }
 
   .bs-handle {
     width: 36px; height: 4px;
@@ -452,8 +422,8 @@
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
-  .bs-action-icon.edit   { background: rgba(201,168,76,0.15); }
-  .bs-action-icon.pass   { background: rgba(27,42,74,0.08); }
+  .bs-action-icon.edit   { background: var(--badge-gold-bg); }
+  .bs-action-icon.pass   { background: var(--badge-navy-bg); }
   .bs-action-icon.delete { background: rgba(192,57,43,0.08); }
 
   /* Crear establecimiento */
@@ -565,7 +535,6 @@
 </style>
 </head>
 <body>
-<div class="phone">
   <div class="top-bar"></div>
 
   <div class="top-nav">
@@ -760,6 +729,107 @@
     </div>
   </div>
 
+  <!-- ── BS: Editar establecimiento ──────────────────────────────── -->
+  <div class="bs-sheet" id="bs-editar-est">
+    <div class="bs-handle"></div>
+    <div class="bs-header">
+      <div class="bs-title">Editar establecimiento</div>
+      <div class="bs-subtitle" id="bs-editar-est-subtitle">—</div>
+    </div>
+    <div class="bs-form">
+      <div class="bs-form-label">Nombre del establecimiento</div>
+      <input class="bs-form-input" id="bs-editar-est-input" type="text" placeholder="Nombre">
+      <div class="bs-form-error" id="bs-editar-est-error"></div>
+    </div>
+    <div class="bs-crear-footer">
+      <button class="bs-btn-crear" id="bs-btn-guardar-est">Guardar cambios</button>
+    </div>
+  </div>
+
+  <!-- ── BS: Acciones de zona ────────────────────────────────────── -->
+  <div class="bs-sheet" id="bs-acc-zona">
+    <div class="bs-handle"></div>
+    <div class="bs-header">
+      <div class="bs-title" id="bs-acc-zona-title">Zona</div>
+      <div class="bs-subtitle" id="bs-acc-zona-subtitle"></div>
+    </div>
+    <div class="bs-actions">
+      <button class="bs-action-btn" id="bs-zona-editar">
+        <div class="bs-action-icon edit">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="#1B2A4A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#1B2A4A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        Editar zona
+      </button>
+      <button class="bs-action-btn danger" id="bs-zona-eliminar">
+        <div class="bs-action-icon delete">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <polyline points="3 6 5 6 21 6" stroke="#C0392B" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="#C0392B" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M10 11v6M14 11v6" stroke="#C0392B" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </div>
+        Eliminar zona
+      </button>
+    </div>
+    <div class="bs-cancel-row">
+      <button class="bs-cancel-btn" id="bs-acc-zona-cancel">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- ── BS: Editar zona ─────────────────────────────────────────── -->
+  <div class="bs-sheet" id="bs-editar-zona">
+    <div class="bs-handle"></div>
+    <div class="bs-header">
+      <div class="bs-title">Editar zona</div>
+      <div class="bs-subtitle" id="bs-editar-zona-subtitle">—</div>
+    </div>
+    <div class="bs-form">
+      <div class="bs-form-label">Descripción</div>
+      <input class="bs-form-input" id="bs-editar-zona-desc" type="text" placeholder="Descripción de la zona">
+      <div class="bs-form-error" id="bs-editar-zona-desc-error"></div>
+      <div class="bs-form-label" style="margin-top:16px;">SISA</div>
+      <input class="bs-form-input" id="bs-editar-zona-sisa" type="text" placeholder="Código SISA (opcional)">
+      <div class="bs-form-label" style="margin-top:16px;">Latitud</div>
+      <input class="bs-form-input" id="bs-editar-zona-lat" type="text" placeholder="Ej: -29.4153 (opcional)">
+      <div class="bs-form-label" style="margin-top:16px;">Longitud</div>
+      <input class="bs-form-input" id="bs-editar-zona-lng" type="text" placeholder="Ej: -66.8542 (opcional)">
+    </div>
+    <div class="bs-crear-footer">
+      <button class="bs-btn-crear" id="bs-btn-guardar-zona">Guardar cambios</button>
+    </div>
+  </div>
+
+  <!-- ── BS: Crear zona ──────────────────────────────────────────── -->
+  <div class="bs-sheet" id="bs-crear-zona">
+    <div class="bs-handle"></div>
+    <div class="bs-header">
+      <div class="bs-title">Crear zona</div>
+      <div class="bs-subtitle" id="bs-crear-zona-subtitle">—</div>
+    </div>
+    <div class="bs-form">
+      <div class="bs-form-label">Descripción</div>
+      <input class="bs-form-input" id="bs-crear-zona-desc" type="text" placeholder="Descripción de la zona">
+      <div class="bs-form-error" id="bs-crear-zona-desc-error"></div>
+      <div class="bs-form-label" style="margin-top:16px;">SISA</div>
+      <input class="bs-form-input" id="bs-crear-zona-sisa" type="text" placeholder="Código SISA (opcional)">
+      <div class="bs-form-label" style="margin-top:16px;">Latitud</div>
+      <input class="bs-form-input" id="bs-crear-zona-lat" type="text" placeholder="Ej: -29.4153 (opcional)">
+      <div class="bs-form-label" style="margin-top:16px;">Longitud</div>
+      <input class="bs-form-input" id="bs-crear-zona-lng" type="text" placeholder="Ej: -66.8542 (opcional)">
+    </div>
+    <div class="bs-crear-footer">
+      <button class="bs-btn-crear" id="bs-btn-crear-zona">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Crear zona
+      </button>
+    </div>
+  </div>
+
 </div><!-- end phone -->
 
 <!-- ── POPUP CONTRASEÑA ──────────────────────────────────────────── -->
@@ -780,9 +850,26 @@
       <button class="btn-popup-confirm" id="btn-pass-save">Confirmar</button>
     </div>
   </div>
+
+<!-- ── POPUP CONFIRMACIÓN GENÉRICO ─────────────────────────────────── -->
+<div class="popup-overlay" id="popup-confirmar">
+  <div class="popup-card">
+    <div class="popup-title" id="popup-confirmar-title">¿Confirmar?</div>
+    <div style="font-family:'Montserrat',sans-serif;font-size:13px;color:var(--text-soft);margin-bottom:20px;" id="popup-confirmar-msg"></div>
+    <div class="popup-btns">
+      <button class="btn-popup-cancel" id="btn-confirmar-cancel">Cancelar</button>
+      <button class="btn-popup-confirm" id="btn-confirmar-ok">Confirmar</button>
+    </div>
+  </div>
 </div>
 
 <script>
+// ── HTML escaping utility (XSS prevention) ───────────────────────────────────
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // ── Estado ────────────────────────────────────────────────────────────────────
 var _adminUsuarios    = [];
 var _zonasList        = [];
@@ -805,6 +892,13 @@ document.querySelectorAll('.tab-btn').forEach(function(btn) {
 });
 
 // ── initAdminTabs (llamado por router según nivel) ────────────────────────────
+/**
+ * Reconfigura las tabs según nivel de acceso del usuario:
+ *   - admin_provincial → "Usuarios" + "Establecimientos"
+ *   - supervisor → "Usuarios" + "Zonas" (reemplaza innerHTML del panel con contenedor vacío)
+ * Se renombran data-tab e IDs de paneles dinámicamente para que el click handler genérico funcione.
+ * @param {string} nivel - nivel_acceso del agente en lowercase
+ */
 window.initAdminTabs = function(nivel) {
   var esAdmin      = nivel === 'admin_provincial';
   var esSupervisor = nivel === 'supervisor';
@@ -821,11 +915,13 @@ window.initAdminTabs = function(nivel) {
     tabs[1].dataset.tab = 'zonas';    tabs[1].textContent = 'Zonas';
     panels[0].id = 'panel-usuarios';
     panels[1].id = 'panel-zonas';
-    panels[1].innerHTML = '<div id="zonas-wrap"><div class="loading-state">Cargando zonas…</div></div>';
+    panels[1].innerHTML = '<div id="zonas-wrap"></div>';
   }
 };
 
 // ── Bottom sheet helpers ──────────────────────────────────────────────────────
+// Patrón: un solo backdrop compartido, múltiples sheets. Solo uno abierto a la vez.
+// _activeBs almacena el ID del sheet activo; openBS cierra el anterior antes de abrir uno nuevo.
 var backdrop = document.getElementById('bs-backdrop');
 
 function openBS(id) {
@@ -884,8 +980,8 @@ window.renderTablaUsuarios = function(usuarios) {
     var display = u.email || ((u.nombre || '') + ' ' + (u.apellido || '')).trim() || '—';
     html +=
       '<div class="usuario-item" data-id="' + u.id + '" style="animation-delay:' + (i * 0.04) + 's">' +
-        '<span class="usuario-id">' + (u.id || '—') + '</span>' +
-        '<span class="usuario-email">' + display + '</span>' +
+        '<span class="usuario-id">' + escapeHtml(String(u.id || '—')) + '</span>' +
+        '<span class="usuario-email">' + escapeHtml(display) + '</span>' +
         nivelBadge(u.nivel_acceso) +
         '<svg class="usuario-chevron" width="7" height="12" viewBox="0 0 7 12" fill="none">' +
           '<path d="M1 1l5 5-5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
@@ -929,25 +1025,188 @@ document.getElementById('bs-usr-pass').addEventListener('click', function() {
   if (_usrActual) abrirPass(_usrActual.id);
 });
 
-// ── Render zonas (supervisor) ─────────────────────────────────────────────────
-window.renderTablaZonas = function(zonas) {
+// ── Zonas (supervisor) ───────────────────────────────────────────────────────
+// TODO: reemplazar MOCK_ZONAS con query a tabla zonas.
+// Backend necesario: tabla 'zonas' en Supabase con columnas (id, descripcion, sisa, latitud, longitud, establecimiento_id).
+// Query: SELECT * FROM zonas WHERE establecimiento_id = agente.establecimiento_id
+var MOCK_ZONAS = [
+  { id: 1, descripcion: '168 - Microárea 1', sisa: 'SA001', latitud: '-29.4153', longitud: '-66.8542' },
+  { id: 2, descripcion: '169 - Microárea 2', sisa: 'SA002', latitud: '-29.4201', longitud: '-66.8611' }
+];
+var _zonaActual = null;
+var _zonaNextId = 3;
+
+window.renderTablaZonas = function() {
   var wrap = document.getElementById('zonas-wrap');
   if (!wrap) return;
-  if (!zonas || zonas.length === 0) {
+
+  if (MOCK_ZONAS.length === 0) {
     wrap.innerHTML = '<div class="empty-state">No hay zonas disponibles</div>';
     return;
   }
-  var html = '<div class="usuario-list">';
-  zonas.forEach(function(z, i) {
+
+  var html =
+    '<div class="est-header">' +
+      '<span class="est-col-id">ID</span>' +
+      '<span class="est-col-nombre">Descripción</span>' +
+      '<span class="est-col-nombre" style="flex:0;min-width:50px;text-align:right;">SISA</span>' +
+    '</div>' +
+    '<div class="est-list" style="display:block;">';
+
+  MOCK_ZONAS.forEach(function(z, i) {
     html +=
-      '<div class="usuario-item" style="cursor:default;animation-delay:' + (i*0.04) + 's">' +
-        '<span class="usuario-email">' + z.zona + '</span>' +
-        '<span class="badge badge-agente">' + z.count + ' agentes</span>' +
+      '<div class="est-item" data-zona-id="' + z.id + '" style="animation-delay:' + (i * 0.04) + 's">' +
+        '<span class="est-item-id">' + escapeHtml(String(z.id)) + '</span>' +
+        '<div class="est-item-info"><div class="est-item-name">' + escapeHtml(z.descripcion) + '</div></div>' +
+        '<span style="font-size:10px;font-weight:400;color:var(--text-soft);flex-shrink:0;">' + escapeHtml(z.sisa || '—') + '</span>' +
+        '<svg class="est-chevron" width="7" height="12" viewBox="0 0 7 12" fill="none">' +
+          '<path d="M1 1l5 5-5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '</svg>' +
       '</div>';
   });
+
   html += '</div>';
   wrap.innerHTML = html;
+
+  wrap.querySelectorAll('.est-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      var id = parseInt(item.dataset.zonaId);
+      var z = MOCK_ZONAS.find(function(x) { return x.id === id; });
+      if (z) abrirAccionesZona(z);
+    });
+  });
 };
+
+/**
+ * Renderiza el panel de zonas para supervisores: muestra provincia/localidad/establecimiento
+ * como contexto read-only, luego la tabla de zonas y botón agregar.
+ * Reasigna el ID 'zonas-wrap' al contenedor interior para que renderTablaZonas() escriba ahí.
+ * @param {Object} agente - Registro del agente logueado (con provincia, localidad, establecimiento)
+ */
+window.initZonasPanel = function(agente) {
+  var wrap = document.getElementById('zonas-wrap');
+  if (!wrap) return;
+
+  // Render read-only fields + button + table container
+  wrap.innerHTML =
+    '<div class="est-provincia-row">' +
+      '<div class="est-filter-label">Provincia</div>' +
+      '<div class="est-provincia-value">' + escapeHtml(agente ? agente.provincia || '—' : '—') + '</div>' +
+    '</div>' +
+    '<div class="est-provincia-row">' +
+      '<div class="est-filter-label">Localidad</div>' +
+      '<div class="est-provincia-value">' + escapeHtml(agente ? agente.localidad || '—' : '—') + '</div>' +
+    '</div>' +
+    '<div class="est-provincia-row">' +
+      '<div class="est-filter-label">Establecimiento</div>' +
+      '<div class="est-provincia-value">' + escapeHtml(agente ? agente.establecimiento || '—' : '—') + '</div>' +
+    '</div>' +
+    '<button class="btn-agregar-est visible" id="btn-agregar-zona">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none">' +
+        '<path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/>' +
+      '</svg>' +
+      'Agregar zona' +
+    '</button>' +
+    '<div id="zonas-table-wrap"></div>';
+
+  // Wire agregar zona button
+  document.getElementById('btn-agregar-zona').addEventListener('click', function() {
+    document.getElementById('bs-crear-zona-subtitle').textContent = agente ? agente.establecimiento || '' : '';
+    document.getElementById('bs-crear-zona-desc').value = '';
+    document.getElementById('bs-crear-zona-sisa').value = '';
+    document.getElementById('bs-crear-zona-lat').value = '';
+    document.getElementById('bs-crear-zona-lng').value = '';
+    document.getElementById('bs-crear-zona-desc-error').textContent = '';
+    openBS('bs-crear-zona');
+    setTimeout(function() { document.getElementById('bs-crear-zona-desc').focus(); }, 350);
+  });
+
+  // Point wrap to the inner container for renderTablaZonas
+  // Swap wrap reference so renderTablaZonas renders into the table area
+  var tableWrap = document.getElementById('zonas-table-wrap');
+  // Override zonas-wrap to point to table area for render function
+  tableWrap.id = 'zonas-wrap';
+
+  window.renderTablaZonas();
+};
+
+// ── BS acciones zona ─────────────────────────────────────────────────────────
+function abrirAccionesZona(z) {
+  _zonaActual = z;
+  document.getElementById('bs-acc-zona-title').textContent = z.descripcion;
+  document.getElementById('bs-acc-zona-subtitle').textContent = 'ID: ' + z.id;
+  openBS('bs-acc-zona');
+}
+
+document.getElementById('bs-acc-zona-cancel').addEventListener('click', function() { closeBS('bs-acc-zona'); });
+
+document.getElementById('bs-zona-editar').addEventListener('click', function() {
+  closeBS('bs-acc-zona');
+  if (!_zonaActual) return;
+  document.getElementById('bs-editar-zona-subtitle').textContent = 'ID: ' + _zonaActual.id;
+  document.getElementById('bs-editar-zona-desc').value = _zonaActual.descripcion;
+  document.getElementById('bs-editar-zona-sisa').value = _zonaActual.sisa || '';
+  document.getElementById('bs-editar-zona-lat').value  = _zonaActual.latitud || '';
+  document.getElementById('bs-editar-zona-lng').value  = _zonaActual.longitud || '';
+  document.getElementById('bs-editar-zona-desc-error').textContent = '';
+  setTimeout(function() { openBS('bs-editar-zona'); }, 100);
+});
+
+document.getElementById('bs-zona-eliminar').addEventListener('click', function() {
+  closeBS('bs-acc-zona');
+  if (!_zonaActual) return;
+  var zona = _zonaActual;
+  // TODO: conectar con DELETE a Supabase → db().from('zonas').delete().eq('id', zona.id)
+  // Backend Java: endpoint DELETE /api/zonas/:id
+  setTimeout(function() {
+    showPopup('popup-confirmar');
+    document.getElementById('popup-confirmar-title').textContent = '¿Eliminar zona?';
+    document.getElementById('popup-confirmar-msg').textContent = '"' + zona.descripcion + '" será eliminada permanentemente.';
+    document.getElementById('btn-confirmar-ok').onclick = function() {
+      MOCK_ZONAS = MOCK_ZONAS.filter(function(z) { return z.id !== zona.id; });
+      closePopup('popup-confirmar');
+      window.renderTablaZonas();
+      if (window.showToast) window.showToast('Zona eliminada');
+    };
+  }, 100);
+});
+
+// ── BS guardar zona (editar) ─────────────────────────────────────────────────
+document.getElementById('bs-btn-guardar-zona').addEventListener('click', function() {
+  var desc = document.getElementById('bs-editar-zona-desc').value.trim();
+  var errEl = document.getElementById('bs-editar-zona-desc-error');
+  if (!desc) { errEl.textContent = 'La descripción es obligatoria'; return; }
+  errEl.textContent = '';
+  // TODO: conectar con UPDATE a Supabase → db().from('zonas').update({descripcion, sisa, latitud, longitud}).eq('id', _zonaActual.id)
+  // Backend Java: endpoint PUT /api/zonas/:id
+  _zonaActual.descripcion = desc;
+  _zonaActual.sisa     = document.getElementById('bs-editar-zona-sisa').value.trim();
+  _zonaActual.latitud  = document.getElementById('bs-editar-zona-lat').value.trim();
+  _zonaActual.longitud = document.getElementById('bs-editar-zona-lng').value.trim();
+  closeBS('bs-editar-zona');
+  window.renderTablaZonas();
+  if (window.showToast) window.showToast('Zona actualizada');
+});
+
+// ── BS crear zona ────────────────────────────────────────────────────────────
+document.getElementById('bs-btn-crear-zona').addEventListener('click', function() {
+  var desc = document.getElementById('bs-crear-zona-desc').value.trim();
+  var errEl = document.getElementById('bs-crear-zona-desc-error');
+  if (!desc) { errEl.textContent = 'La descripción es obligatoria'; return; }
+  errEl.textContent = '';
+  // TODO: conectar con INSERT a Supabase → db().from('zonas').insert({descripcion, sisa, latitud, longitud, establecimiento_id})
+  // Backend Java: endpoint POST /api/zonas
+  MOCK_ZONAS.push({
+    id: _zonaNextId++,
+    descripcion: desc,
+    sisa: document.getElementById('bs-crear-zona-sisa').value.trim(),
+    latitud: document.getElementById('bs-crear-zona-lat').value.trim(),
+    longitud: document.getElementById('bs-crear-zona-lng').value.trim()
+  });
+  closeBS('bs-crear-zona');
+  window.renderTablaZonas();
+  if (window.showToast) window.showToast('Zona creada');
+});
 
 // ── Establecimientos ──────────────────────────────────────────────────────────
 window.initEstablecimientos = function(agente, localidades, establecimientosPorLoc) {
@@ -1038,8 +1297,8 @@ function renderEstList() {
     item.className = 'est-item';
     item.style.animationDelay = (i * 0.04) + 's';
     item.innerHTML =
-      (est.id ? '<span class="est-item-id">' + est.id + '</span>' : '') +
-      '<div class="est-item-info"><div class="est-item-name">' + (est.nombre || est.establecimiento || '—') + '</div></div>' +
+      (est.id ? '<span class="est-item-id">' + escapeHtml(String(est.id)) + '</span>' : '') +
+      '<div class="est-item-info"><div class="est-item-name">' + escapeHtml(est.nombre || est.establecimiento || '—') + '</div></div>' +
       '<svg class="est-chevron" width="7" height="12" viewBox="0 0 7 12" fill="none">' +
         '<path d="M1 1l5 5-5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
       '</svg>';
@@ -1059,11 +1318,45 @@ function abrirAccionesEst(est) {
 document.getElementById('bs-acc-est-cancel').addEventListener('click', function() { closeBS('bs-acc-est'); });
 document.getElementById('bs-est-editar').addEventListener('click', function() {
   closeBS('bs-acc-est');
-  if (window.showToast) window.showToast('Función disponible próximamente');
+  if (!_estActual) return;
+  document.getElementById('bs-editar-est-subtitle').textContent = 'ID: ' + (_estActual.id || '—') + ' · ' + (_localidadActual || '');
+  document.getElementById('bs-editar-est-input').value = _estActual.nombre || _estActual.establecimiento || '';
+  document.getElementById('bs-editar-est-error').textContent = '';
+  setTimeout(function() { openBS('bs-editar-est'); }, 100);
 });
+
+document.getElementById('bs-btn-guardar-est').addEventListener('click', function() {
+  var nombre = document.getElementById('bs-editar-est-input').value.trim();
+  var errEl  = document.getElementById('bs-editar-est-error');
+  if (!nombre) { errEl.textContent = 'El nombre es obligatorio'; return; }
+  errEl.textContent = '';
+  // TODO: conectar con UPDATE a Supabase → requiere tabla 'establecimientos'. db().from('establecimientos').update({nombre}).eq('id', _estActual.id)
+  // Backend Java: endpoint PUT /api/establecimientos/:id
+  _estActual.nombre = nombre;
+  if (_estActual.establecimiento) _estActual.establecimiento = nombre;
+  closeBS('bs-editar-est');
+  renderEstList();
+  if (window.showToast) window.showToast('Establecimiento actualizado');
+});
+
 document.getElementById('bs-est-eliminar').addEventListener('click', function() {
   closeBS('bs-acc-est');
-  if (window.showToast) window.showToast('Función disponible próximamente');
+  if (!_estActual || !_localidadActual) return;
+  var est = _estActual;
+  // TODO: conectar con DELETE a Supabase → db().from('establecimientos').delete().eq('id', est.id)
+  // Backend Java: endpoint DELETE /api/establecimientos/:id
+  setTimeout(function() {
+    showPopup('popup-confirmar');
+    document.getElementById('popup-confirmar-title').textContent = '¿Eliminar establecimiento?';
+    document.getElementById('popup-confirmar-msg').textContent = '"' + (est.nombre || est.establecimiento || '') + '" será eliminado permanentemente.';
+    document.getElementById('btn-confirmar-ok').onclick = function() {
+      var ests = _establecimientos[_localidadActual] || [];
+      _establecimientos[_localidadActual] = ests.filter(function(e) { return e !== est; });
+      closePopup('popup-confirmar');
+      renderEstList();
+      if (window.showToast) window.showToast('Establecimiento eliminado');
+    };
+  }, 100);
 });
 
 // ── BS crear establecimiento ──────────────────────────────────────────────────
@@ -1083,6 +1376,8 @@ document.getElementById('bs-btn-crear-est').addEventListener('click', function()
   errEl.textContent = '';
   btn.disabled = true; btn.textContent = 'Creando…';
   // Placeholder — conectar con Supabase cuando haya tabla establecimientos
+  // TODO: requiere INSERT → db().from('establecimientos').insert({nombre, localidad: _localidadActual})
+  // Backend Java: endpoint POST /api/establecimientos
   setTimeout(function() {
     btn.disabled = false;
     btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg> Crear establecimiento';
@@ -1097,6 +1392,13 @@ function closePopup(id) { document.getElementById(id).classList.remove('active')
 
 document.getElementById('popup-pass').addEventListener('click', function(e) {
   if (e.target === this) closePopup('popup-pass');
+});
+
+document.getElementById('popup-confirmar').addEventListener('click', function(e) {
+  if (e.target === this) closePopup('popup-confirmar');
+});
+document.getElementById('btn-confirmar-cancel').addEventListener('click', function() {
+  closePopup('popup-confirmar');
 });
 
 function abrirPass(id) {

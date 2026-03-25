@@ -2,66 +2,13 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=390, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>VisitAPS – Actualizar zona</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html, body {
-    width: 100%;
-    min-height: 100vh;
-    margin: 0 auto;
-    background: #C8C4BC;
-    font-family: 'Montserrat', sans-serif;
-    display: flex;
-    justify-content: center;
-  }
-
-  .phone {
-    width: 100%;
-    max-width: 390px;
-    min-height: 100vh;
-    background: var(--cream);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    overflow-x: hidden;
-  }
-
-  :root {
-    --navy:       #1B2A4A;
-    --navy-light: #243660;
-    --gold:       #C9A84C;
-    --gold-light: #D9BC72;
-    --cream:      #EDEAE4;
-    --cream-dark: #DDD9D2;
-    --text-main:  #2C2C2C;
-    --text-soft:  #7A7672;
-    --gray-btn:   #8A8580;
-    --steel:      #5A7290;
-    --steel-light:#6B84A3;
-  }
-
-  
-
-  
-
-  .phone::before {
-    content: '';
-    position: absolute;
-    top: -60px; left: 50%;
-    transform: translateX(-50%);
-    width: 300px; height: 300px;
-    background: radial-gradient(circle, rgba(201,168,76,0.10) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
   .top-bar {
     width: 100%; height: 4px;
-    background: linear-gradient(90deg, #1B2A4A 0%, #C9A84C 50%, #1B2A4A 100%);
+    background: var(--gold);
     flex-shrink: 0; position: relative; z-index: 1;
   }
 
@@ -252,18 +199,6 @@
     color: var(--text-soft); letter-spacing: 0.1em;
   }
 
-  .version-footer {
-    width: 100%;
-    border-top: 1px solid var(--cream-dark);
-    padding-top: 18px;
-    display: flex;
-    justify-content: center;
-  }
-  .version {
-    font-size: 10px; font-weight: 300;
-    color: var(--text-soft); letter-spacing: 0.1em;
-  }
-
   @keyframes fadeDown {
     from { opacity: 0; transform: translateY(-14px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -279,7 +214,7 @@
 </style>
 </head>
 <body>
-<div class="phone">
+<div class="bg-glow"></div>
   <div class="top-bar"></div>
 
 
@@ -372,7 +307,6 @@
     </div>
 
   </div>
-</div>
 
 <script>
   // ─── VARIABLES DE CONEXIÓN ──────────────────────────────────────────────────

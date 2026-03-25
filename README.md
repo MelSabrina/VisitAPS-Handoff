@@ -1,107 +1,146 @@
 # VisitAPS
 
-Aplicación móvil para agentes sanitarios del Ministerio de Salud Argentina. Permite realizar relevamientos domiciliarios durante rondas sanitarias.
+Aplicacion web progresiva (PWA) para agentes sanitarios de campo del Ministerio de Salud de la Nacion Argentina. Permite realizar relevamientos domiciliarios durante rondas sanitarias, gestionar usuarios y establecimientos, y generar reportes exportables a CSV.
 
-## Arquitectura
+## Que hace la aplicacion
+
+Los agentes sanitarios visitan viviendas en sus zonas asignadas y registran datos sobre:
+- La vivienda (tipo, servicios basicos, riesgos sanitarios)
+- Los habitantes (datos filiatorios, DNI, cobertura de salud)
+- Acceso a sistemas de salud (CAPS, medicamentos, turnos)
+
+VisitAPS digitaliza el registro de visitas domiciliarias, reemplazando formularios en papel o herramientas no específicas para trabajo de campo con una lógica offline first.
+
+## Stack tecnico
+
+| Componente | Tecnologia |
+|---|---|
+| Frontend | Vanilla JS (ES5/ES6), HTML, CSS custom — sin frameworks |
+| Routing | SPA hash-based (`#login`, `#menu`, `#detalle`, etc.) |
+| Backend / DB | [Supabase](https://supabase.com) (Auth + PostgreSQL + RLS) |
+| Deploy | [Vercel](https://vercel.com) — sitio estatico, sin build step |
+| PWA | manifest.json + service worker (sw.js) |
+
+## Estructura de carpetas
 
 ```
-index.html              ← SPA shell (carga fuentes, contenedor #app, scripts)
-js/
-  router.js             ← Router hash-based, fetch/parse/inject de páginas
-  supabase-client.js    ← Cliente Supabase + helpers de auth
-  data-service.js       ← CRUD: agentes, rondas, relevamientos, módulos, pacientes
-  form-sync.js          ← Binding bidireccional formulario ↔ Supabase (debounce 1.5s)
-pantallas/              ← 7 pantallas HTML estáticas (diseño INTOCABLE)
-supabase/
-  migrations/
-    001_create_tables.sql ← Schema completo: tablas, índices, RLS, triggers
+/
+├── index.html              ← Shell de la SPA (CSS variables, scripts globales, #app)
+├── manifest.json           ← Configuracion PWA
+├── sw.js                   ← Service worker
+├── serve.json              ← Rewrites para Vercel / serve
+├── .env.example            ← Variables de entorno necesarias
+├── Migracion-IonicAngular.md  ← Guia de migracion a Ionic/Angular
+│
+├── js/
+│   ├── supabase-client.js  ← Cliente Supabase + helpers de auth (window.VisitAuth)
+│   ├── data-service.js     ← Capa de acceso a datos (window.VisitData)
+│   ├── form-sync.js        ← Binding formulario <-> Supabase con debounce (window.FormSync)
+│   └── router.js           ← Router hash-based, carga de datos post-mount, popups, navegacion
+│
+├── pantallas/              ← 13 pantallas HTML estaticas (una por vista)
+│   ├── visitaps-login.html
+│   ├── visitaps-menu.html
+│   ├── visitaps-menu-admin.html
+│   ├── visitaps-perfil.html
+│   ├── visitaps-actualizar-zona.html
+│   ├── visitaps-rondas.html
+│   ├── visitaps-relevamientos.html
+│   ├── visitaps-detalle-relevamiento.html
+│   ├── visitaps-administracion.html
+│   ├── visitaps-crear-usuario.html
+│   ├── visitaps-editar-usuario.html
+│   ├── visitaps-reportes.html
+│   └── visitaps-terminos.html
+│
+├── Logos/
+│   ├── favicon.png
+│   ├── logo-button.svg
+│   ├── icon-192.png
+│   └── icon-512.png
+│
+└── supabase/
+    └── migrations/
+        └── 001_create_tables.sql
 ```
 
-### Flujo de navegación
+## Como correr el proyecto localmente
 
-```
-#login → #menu → #rondas → #relevamientos?ronda=ID → #detalle?relevamiento=ID
-                     ↕              ↕                        ↕
-                  #perfil        #perfil                  #perfil
-                  (vuelve)       (vuelve)                 (vuelve)
-```
-
-### Cómo funciona el router
-
-1. El router escucha `hashchange` y mapea el hash a un archivo en `pantallas/`
-2. Hace fetch del HTML, lo parsea con `DOMParser`
-3. Extrae los `<style>` del `<head>`, el contenido del `<body>`, y los `<script>`
-4. Inyecta los estilos en `<style id="page-styles">` (swap completo, sin conflictos CSS)
-5. Inyecta el HTML en `#app` y re-ejecuta los scripts
-6. Detecta íconos de navegación por contenido SVG (sin modificar los HTML originales)
-
-## Cómo correr el proyecto
+### 1. Clonar el repositorio
 
 ```bash
-# Instalar dependencia de servidor local
-npm install -g serve
-
-# Correr
-serve . -p 3000
-
-# Abrir en navegador
-open http://localhost:3000
+git clone <url-del-repo>
+cd VisitAPS-Handoff
 ```
 
-## Base de datos (Supabase)
+### 2. Configurar variables de entorno
 
-### Setup inicial
+```bash
+cp .env.example .env
+```
 
-1. Ir al [SQL Editor de Supabase](https://asmfwqsygqebhywujuvo.supabase.co)
-2. Ejecutar `supabase/migrations/001_create_tables.sql`
-3. Crear un usuario en Auth → Users con email y contraseña
-4. Crear un registro en la tabla `agentes` con el `auth_uid` del usuario creado
+Editar `js/supabase-client.js` (lineas 12-13) con los valores reales:
 
-### Tablas
+```js
+var SUPABASE_URL = 'https://tu-proyecto.supabase.co';
+var SUPABASE_ANON_KEY = 'tu_anon_key_aqui';
+```
 
-| Tabla | Descripción |
-|-------|-------------|
-| `agentes` | Datos del agente sanitario (vinculado a auth.users) |
-| `rondas` | Rondas sanitarias con fechas y ubicación |
-| `relevamientos` | Registro por vivienda (estado: borrador/no_enviado/enviado) |
-| `modulo_visita` | Datos de la visita (fecha, tipo, dirección, teléfonos) |
-| `modulo_vivienda` | Datos de la vivienda (tipo, servicios, riesgos sanitarios) |
-| `modulo_sistemas` | Acceso a sistemas de salud |
-| `pacientes` | Personas en la vivienda (datos filiatorios, 1:N con relevamiento) |
+### 3. Servir con cualquier servidor estatico
 
-### Row Level Security (RLS)
+El proyecto no necesita build. Cualquier servidor HTTP funciona:
 
-Cada agente solo puede ver y modificar sus propios relevamientos. Las rondas son visibles para todos los usuarios autenticados.
+```bash
+# Con npx (Node.js)
+npx serve .
+
+# Con Python
+python -m http.server 8080
+
+# Con PHP
+php -S localhost:8080
+```
+
+Abrir en el navegador con vista mobile en DevTools, o desde un dispositivo movil.
+
+### 4. Base de datos
+
+1. Crear un proyecto en [Supabase](https://supabase.com)
+2. Ejecutar `supabase/migrations/001_create_tables.sql` en el SQL Editor
+3. Crear un usuario en Auth > Users con email y contrasena
+4. Crear un registro en la tabla `agentes` con el `auth_uid` del usuario
+
+El esquema completo de tablas esta documentado en `Migracion-IonicAngular.md`.
 
 ## Variables de entorno
 
-Copiar `.env.example` a `.env` y completar:
+| Variable | Descripcion | Donde se usa |
+|---|---|---|
+| `SUPABASE_URL` | URL del proyecto Supabase | `js/supabase-client.js` |
+| `SUPABASE_ANON_KEY` | Clave publica (anon) de Supabase | `js/supabase-client.js` |
+| `SUPABASE_PASSWORD` | Password de la DB (solo para migraciones) | No se expone en frontend |
+
+## Niveles de acceso
+
+| Nivel | Menu | Capacidades |
+|---|---|---|
+| `agente` | menu.html | Rondas, relevamientos y reportes propios |
+| `supervisor` | menu-admin.html | Ve agentes de su establecimiento, gestiona zonas |
+| `admin_provincial` | menu-admin.html | Ve todos los agentes, gestiona establecimientos |
+
+## Flujo de navegacion
 
 ```
-SUPABASE_URL=...
-SUPABASE_ANON_KEY=...
-SUPABASE_PASSWORD=...    # Solo para migraciones
+#login → #menu/#menu-admin → #rondas → #relevamientos?ronda=ID → #detalle?relevamiento=ID
+              ↕                  ↕              ↕                        ↕
+           #perfil           #perfil         #perfil                  #perfil
+           (lateral)         (lateral)       (lateral)                (lateral)
+
+#menu-admin → #administracion → #editar-usuario / #crear-usuario
+            → #reportes
 ```
 
-## Deploy (Vercel)
+## Migracion a Ionic/Angular
 
-```bash
-# Instalar Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-
-# O para producción
-vercel --prod
-```
-
-El proyecto es estático puro (HTML/CSS/JS) — no requiere build step.
-
-## Notas para el equipo de desarrollo
-
-- **El diseño visual es intocable** — no modificar CSS, layouts, ni SVGs inline
-- Los archivos en `pantallas/` son los originales del prototipo y se cargan tal cual
-- La autenticación usa Supabase Auth con email/contraseña
-- Los formularios guardan en tiempo real con debounce de 1.5 segundos
-- El botón "Completar y Guardar" fuerza un save inmediato y cambia el estado a `no_enviado`
+Adjunto documento de migración ionic/angular para el equipo de desarrollo:
+**[Migracion-IonicAngular.md](./Migracion-IonicAngular.md)**

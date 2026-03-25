@@ -2,54 +2,77 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=390, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>VisitAPS – Relevamiento</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/*
+ * Sistema de modos (data-mode): router.js asigna #app[data-mode="nuevo|lectura|edicion"]
+ * después del mount. Las clases de visibilidad controlan qué elementos aparecen por modo:
+ *   .edit-only     → visible en modo "nuevo" y "edicion" (campos editables)
+ *   .view-only     → visible en modo "lectura" (valores readonly)
+ *   .edicion-only  → visible solo en modo "edicion" (action bar guardar cambios)
+ *   .nuevo-only    → visible solo en modo "nuevo" (action bar descartar/guardar)
+ * Los action-bar usan display:flex en vez de block para mantener el layout horizontal.
+ */
+.edit-only, .view-only, .edicion-only, .nuevo-only { display: none; }
 
-  html, body {
-    width: 100%;
-    min-height: 100vh;
-    margin: 0 auto;
-    background: #C8C4BC;
-    font-family: 'Montserrat', sans-serif;
-    display: flex;
-    justify-content: center;
-  }
+#app[data-mode="nuevo"]   .nuevo-only   { display: block; }
+#app[data-mode="lectura"] .view-only    { display: block; }
+#app[data-mode="edicion"] .edicion-only { display: block; }
 
-  .phone {
-    width: 100%;
-    max-width: 390px;
-    height: 100vh;
-    background: var(--cream);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-  }
+#app[data-mode="lectura"] .action-bar.view-only    { display: flex; }
+#app[data-mode="edicion"] .action-bar.edicion-only { display: flex; }
+#app[data-mode="nuevo"]   .action-bar.nuevo-only   { display: flex; }
 
-  :root {
-    --navy:       #1B2A4A;
-    --navy-light: #243660;
-    --gold:       #C9A84C;
-    --gold-light: #D9BC72;
-    --cream:      #EDEAE4;
-    --cream-dark: #DDD9D2;
-    --text-main:  #2C2C2C;
-    --text-soft:  #7A7672;
-    --steel:      #5A7290;
-    --teal:       #50b7b2;
-  }
+#app[data-mode="edicion"] .edit-only { display: block; }
+#app[data-mode="nuevo"]   .edit-only { display: block; }
+#app[data-mode="edicion"] button.edit-only { display: flex; }
+#app[data-mode="nuevo"]   button.edit-only { display: flex; }
+#app[data-mode="lectura"] .edit-only { display: none !important; }
+#app[data-mode="lectura"] .btn-info { display: flex; }
 
-  
+#app[data-mode="edicion"] .dropdown-trigger,
+#app[data-mode="nuevo"]   .dropdown-trigger {
+  color: var(--text-main);
+  border-bottom-color: var(--cream-dark);
+}
+#app[data-mode="edicion"] .dropdown-trigger:hover,
+#app[data-mode="nuevo"]   .dropdown-trigger:hover {
+  border-bottom-color: var(--steel);
+}
+
+#app[data-mode="edicion"] .date-display,
+#app[data-mode="nuevo"]   .date-display {
+  color: var(--text-main);
+  border-bottom-color: var(--cream-dark);
+  cursor: pointer;
+}
+#app[data-mode="edicion"] .date-display .placeholder,
+#app[data-mode="nuevo"]   .date-display .placeholder {
+  color: var(--navy);
+  opacity: 0.65;
+}
+
+#app[data-mode="lectura"] .fab-top,
+#app[data-mode="edicion"] .fab-top,
+#app[data-mode="nuevo"]   .fab-top { bottom: 68px; }
+
+.dd-readonly {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px; font-weight: 400;
+  color: var(--text-soft);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--cream-dark);
+}
+
+
 
   
 
   .top-bar {
     width: 100%; height: 4px;
-    background: linear-gradient(90deg, #1B2A4A 0%, #C9A84C 50%, #1B2A4A 100%);
+    background: var(--gold);
     flex-shrink: 0;
   }
 
@@ -75,6 +98,7 @@
     -webkit-overflow-scrolling: touch;
     display: flex; flex-direction: column;
     align-items: center;
+    padding-bottom: 120px;
   }
   .scroll-body::-webkit-scrollbar { display: none; }
 
@@ -128,6 +152,87 @@
     color: var(--text-main); text-align: center;
     margin-top: 4px; line-height: 1.3;
   }
+  .btn-edit-identi {
+    background: none; border: none; cursor: pointer;
+    padding: 4px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0.6; transition: opacity 0.2s;
+    flex-shrink: 0;
+  }
+  .btn-edit-identi:hover { opacity: 1; }
+
+  .bs-backdrop {
+    background: rgba(27,42,74,0.35);
+    z-index: 200;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.28s ease;
+  }
+  .bs-backdrop.open { opacity: 1; pointer-events: all; }
+
+  .bs-sheet {
+    bottom: 0;
+    width: 100vw;
+    max-width: 600px;
+    background: #F6EDE0;
+    border-radius: 20px 20px 0 0;
+    z-index: 201;
+    max-height: 82dvh;
+    display: flex; flex-direction: column;
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .bs-handle {
+    width: 36px; height: 4px;
+    background: var(--cream-dark);
+    border-radius: 2px;
+    margin: 12px auto 0;
+    flex-shrink: 0;
+  }
+  .bs-header {
+    padding: 16px 28px 8px;
+    flex-shrink: 0;
+  }
+  .bs-title {
+    font-family: 'Lora', serif;
+    font-size: 16px; font-weight: 600;
+    color: var(--navy);
+  }
+  .bs-subtitle {
+    font-size: 12px; font-weight: 400;
+    color: var(--text-soft); margin-top: 2px;
+  }
+  .bs-form { padding: 20px 28px 0; flex-shrink: 0; }
+  .bs-form-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px; font-weight: 600;
+    color: var(--text-soft); letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .bs-form-input {
+    width: 100%; padding: 10px 0;
+    border: none; border-bottom: 1px solid var(--cream-dark);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px; font-weight: 400; color: var(--navy);
+    outline: none; transition: border-color 0.2s;
+  }
+  .bs-form-input:focus { border-bottom-color: var(--steel); }
+  .bs-form-input::placeholder { color: var(--text-soft); font-weight: 400; font-size: 13px; }
+  .bs-form-error {
+    font-size: 11px; font-weight: 400;
+    color: #C0392B; margin-top: 6px; min-height: 16px;
+  }
+  .bs-crear-footer { padding: 20px 28px 24px; flex-shrink: 0; }
+  .bs-btn-crear {
+    width: 100%; padding: 14px;
+    border: none; border-radius: 50px;
+    background: var(--steel); color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: background 0.2s, transform 0.15s;
+  }
+  .bs-btn-crear:hover { background: var(--steel-light); transform: translateY(-1px); }
+  .bs-btn-crear:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
   /* Save button */
   .btn-wrap {
@@ -164,6 +269,12 @@
     margin-top: 12px;
     animation: fadeIn 0.4s 0.2s ease both;
   }
+  .accordions::after {
+    content: '';
+    display: block;
+    margin: 0 52px;
+    height: 2px; background: var(--cream-dark);
+  }
 
   .accordion {
     overflow: hidden;
@@ -173,13 +284,6 @@
     content: '';
     position: absolute;
     top: 0; left: 52px; right: 52px;
-    height: 2px; background: var(--cream-dark);
-  }
-  .accordions { width: 100%; margin-top: 12px; animation: fadeIn 0.4s 0.2s ease both; }
-  .accordions::after {
-    content: '';
-    display: block;
-    margin: 0 52px;
     height: 2px; background: var(--cream-dark);
   }
 
@@ -255,7 +359,7 @@
     background: var(--steel); opacity: 0.45;
     border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; margin-top: 2px;
+    flex-shrink: 0; margin-top: 16px;
     transition: opacity 0.2s;
     color: #fff;
     font-family: 'Montserrat', sans-serif;
@@ -336,6 +440,7 @@
     border: 1px solid var(--cream-dark);
     border-radius: 6px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     box-shadow: 0 4px 16px rgba(27,42,74,0.15);
     display: none;
   }
@@ -518,35 +623,37 @@
 
 
   /* Popup overlay */
-  .popup-overlay {
-    position: absolute; inset: 0;
-    background: rgba(27,42,74,0.45);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 100;
+  .info-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(27,42,74,0.35);
+    z-index: 200;
     opacity: 0; pointer-events: none;
-    transition: opacity 0.2s;
-    padding: 32px;
+    transition: opacity 0.28s ease;
   }
-  .popup-overlay.active { opacity: 1; pointer-events: all; }
-  .popup-card {
-    width: 100%; background: var(--cream);
-    border-radius: 12px; padding: 24px 24px 20px;
-    box-shadow: 0 8px 32px rgba(27,42,74,0.25);
-    transform: translateY(10px); transition: transform 0.2s;
+  .info-backdrop.open { opacity: 1; pointer-events: all; }
+
+  .info-sheet {
+    position: fixed;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    width: 100%; max-width: 600px;
+    background: #F6EDE0;
+    border-radius: 20px 20px 0 0;
+    z-index: 201;
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+    padding: 12px 28px 32px;
   }
-  .popup-overlay.active .popup-card { transform: translateY(0); }
+  .info-sheet.open { transform: translateX(-50%) translateY(0); }
+
+  .info-handle {
+    width: 36px; height: 4px;
+    background: var(--cream-dark);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
   .popup-code { font-size: 9px; font-weight: 300; color: var(--text-soft); letter-spacing: 0.04em; margin-bottom: 4px; }
   .popup-title { font-family: 'Lora', serif; font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 12px; line-height: 1.35; }
   .popup-desc { font-size: 11.5px; font-weight: 400; color: var(--text-soft); line-height: 1.6; }
-  .popup-close {
-    width: 100%; margin-top: 20px; padding: 12px;
-    border: none; border-radius: 50px;
-    background: var(--navy); color: #F0EDE8;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 12px; font-weight: 600;
-    cursor: pointer; transition: background 0.2s;
-  }
-  .popup-close:hover { background: var(--navy-light); }
 
   /* FAB to top */
   .fab-top {
@@ -578,7 +685,6 @@
 </style>
 </head>
 <body>
-<div class="phone">
   <div class="top-bar"></div>
 
 
@@ -612,29 +718,29 @@
       <div class="matrix-row">
         <div class="matrix-cell">
           <span class="cell-label">CAPS</span>
-          <span class="cell-value" id="caps-val">36</span>
+          <span class="cell-value" id="caps-val">—</span>
         </div>
         <div class="matrix-cell">
           <span class="cell-label">Descripción</span>
-          <span class="cell-value" id="desc-val">VisitAPS 2026</span>
+          <span class="cell-value" id="desc-val">—</span>
         </div>
         <div class="matrix-cell">
           <span class="cell-label">Nombre</span>
-          <span class="cell-value" id="nom-val">VisitAPS 2026</span>
+          <span class="cell-value" id="nom-val">—</span>
         </div>
       </div>
       <div class="matrix-row">
         <div class="matrix-cell">
           <span class="cell-label">Id Ronda</span>
-          <span class="cell-value" id="idronda-val">36</span>
+          <span class="cell-value" id="idronda-val">—</span>
         </div>
         <div class="matrix-cell">
           <span class="cell-label">Fecha Desde</span>
-          <span class="cell-value" id="fdesde-val">01/11/25</span>
+          <span class="cell-value" id="fdesde-val">—</span>
         </div>
         <div class="matrix-cell">
           <span class="cell-label">Fecha Hasta</span>
-          <span class="cell-value" id="fhasta-val">01/11/32</span>
+          <span class="cell-value" id="fhasta-val">—</span>
         </div>
       </div>
       <div class="matrix-row">
@@ -656,23 +762,56 @@
     <!-- Identi -->
     <div class="identi-section">
       <span class="identi-label">Identificación</span>
-      <div class="identi-value" id="identi-val">Prueba Rioja - test</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+        <div class="identi-value" id="identi-val"></div>
+        <button class="btn-edit-identi edit-only" id="btn-edit-identi" onclick="abrirEditIdenti()" title="Editar identificación">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="var(--steel)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="var(--steel)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
-    <!-- Completar y Guardar -->
-    <div class="btn-wrap">
-      <button class="btn-guardar">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
-          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="#F0EDE8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-          <polyline points="17,21 17,13 7,13 7,21" stroke="#F0EDE8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-          <polyline points="7,3 7,8 15,8" stroke="#F0EDE8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Completar y Guardar
-      </button>
+    <!-- BS: Editar identificación -->
+    <div class="bs-backdrop" id="bs-identi-backdrop" onclick="cerrarEditIdenti()"></div>
+    <div class="bs-sheet" id="bs-identi-sheet">
+      <div class="bs-handle"></div>
+      <div class="bs-header">
+        <div class="bs-title">Editar identificación</div>
+        <div class="bs-subtitle">Nombre o dirección del relevamiento</div>
+      </div>
+      <div class="bs-form">
+        <input class="bs-form-input" type="text" id="bs-identi-input" placeholder="Ej: Familia García — Mz 3 Casa 7" maxlength="120">
+        <div class="bs-form-error" id="bs-identi-error"></div>
+      </div>
+      <div class="bs-crear-footer">
+        <button class="bs-btn-crear" id="bs-identi-guardar">Guardar</button>
+      </div>
     </div>
 
-    <!-- Group label -->
-    <div class="group-label">Seleccione un módulo:</div>
+    <!-- Action bar nuevo: Descartar / GUARDAR -->
+    <div class="action-bar nuevo-only">
+      <button class="action-bar-btn danger" id="btn-descartar">Descartar</button>
+      <button class="action-bar-btn primary" id="btn-guardar-nuevo">GUARDAR</button>
+    </div>
+
+    <!-- Group label — varía por modo -->
+    <div class="group-label nuevo-only">Seleccione un módulo:</div>
+    <div class="group-label edicion-only">Seleccione un módulo:</div>
+    <div class="group-label view-only">Módulos del relevamiento</div>
+
+    <!-- Action bar lectura: ELIMINAR / EDITAR -->
+    <div class="action-bar view-only">
+      <button class="action-bar-btn danger" id="btn-eliminar-relev">ELIMINAR</button>
+      <button class="action-bar-btn primary" id="btn-editar-relev">EDITAR</button>
+    </div>
+
+    <!-- Action bar edicion: Salir / Guardar -->
+    <div class="action-bar edicion-only">
+      <button class="action-bar-btn danger" id="btn-salir-edicion">Salir sin guardar</button>
+      <button class="action-bar-btn primary" id="btn-guardar-edicion">GUARDAR CAMBIOS</button>
+    </div>
 
 
     <!-- Accordions -->
@@ -698,13 +837,14 @@
             <button class="btn-info" onclick="openPopup('10090')">?</button>
           </div>
           <div class="date-wrap" id="datewrap-10090">
-            <div class="date-display" id="date-display-10090" onclick="toggleCal('10090')">
+            <div class="date-display edit-only" id="date-display-10090" onclick="toggleCal('10090')">
               <span class="placeholder" id="date-text-10090">dd-mm-aaaa</span>
               <svg class="date-icon" width="14" height="14" viewBox="0 0 24 24" fill="none">
                 <rect x="3" y="4" width="18" height="18" rx="2" stroke="#1B2A4A" stroke-width="1.6"/>
                 <path d="M16 2v4M8 2v4M3 10h18" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round"/>
               </svg>
             </div>
+            <div class="view-only dd-readonly" id="date-readonly-10090">—</div>
             <div class="cal-popup" id="cal-10090">
               <div class="cal-header">
                 <button class="cal-nav" onclick="calNav('10090',-1)">
@@ -734,10 +874,11 @@
             <button class="btn-info" onclick="openPopup('10100')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10100">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10100')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10100')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10100">—</div>
             <div class="dropdown-list" id="dl-10100">
               <div class="dropdown-option" onclick="selectOption('10100','Censo')">Censo</div>
               <div class="dropdown-option" onclick="selectOption('10100','Ronda')">Ronda</div>
@@ -756,10 +897,11 @@
             <button class="btn-info" onclick="openPopup('10120')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10120">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10120')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10120')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10120">—</div>
             <div class="dropdown-list" id="dl-10120">
               <div class="dropdown-option" onclick="selectOption('10120','Rural')">Rural</div>
               <div class="dropdown-option" onclick="selectOption('10120','Urbana')">Urbana</div>
@@ -777,7 +919,8 @@
             </div>
             <button class="btn-info" onclick="openPopup('10130')">?</button>
           </div>
-          <input class="field-input" type="text" id="f10130" placeholder="Ingrese la dirección">
+          <input class="field-input edit-only" type="text" id="f10130" placeholder="Ingrese la dirección">
+          <div class="view-only dd-readonly" id="input-readonly-f10130">—</div>
         </div>
 
         <!-- 10140 Manzana -->
@@ -789,7 +932,8 @@
             </div>
             <button class="btn-info" onclick="openPopup('10140')">?</button>
           </div>
-          <input class="field-input" type="text" id="f10140" placeholder="Ej: M12 C04">
+          <input class="field-input edit-only" type="text" id="f10140" placeholder="Ej: M12 C04">
+          <div class="view-only dd-readonly" id="input-readonly-f10140">—</div>
         </div>
 
         <!-- 10150 Situación de la vivienda -->
@@ -802,10 +946,11 @@
             <button class="btn-info" onclick="openPopup('10150')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10150">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10150')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10150')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10150">—</div>
             <div class="dropdown-list" id="dl-10150">
               <div class="dropdown-option" onclick="selectOption('10150','Habitada')">Habitada</div>
               <div class="dropdown-option" onclick="selectOption('10150','Deshabilitada')">Deshabilitada</div>
@@ -825,10 +970,11 @@
             <button class="btn-info" onclick="openPopup('10160')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10160">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10160')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10160')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10160">—</div>
             <div class="dropdown-list" id="dl-10160">
               <div class="dropdown-option" onclick="selectOption('10160','Accedió')">Accedió</div>
               <div class="dropdown-option" onclick="selectOption('10160','Ausente')">Ausente</div>
@@ -846,7 +992,8 @@
             </div>
             <button class="btn-info" onclick="openPopup('10170')">?</button>
           </div>
-          <input class="field-input" type="tel" data-input-type="tel" id="f10170" placeholder="Ej: 011 4XXX-XXXX">
+          <input class="field-input edit-only" type="tel" data-input-type="tel" id="f10170" placeholder="Ej: 011 4XXX-XXXX">
+          <div class="view-only dd-readonly" id="input-readonly-f10170">—</div>
         </div>
 
         <!-- 10180 Teléfono 2 -->
@@ -858,7 +1005,8 @@
             </div>
             <button class="btn-info" onclick="openPopup('10180')">?</button>
           </div>
-          <input class="field-input" type="tel" data-input-type="tel" id="f10180" placeholder="Ej: 011 4XXX-XXXX">
+          <input class="field-input edit-only" type="tel" data-input-type="tel" id="f10180" placeholder="Ej: 011 4XXX-XXXX">
+          <div class="view-only dd-readonly" id="input-readonly-f10180">—</div>
         </div>
 
         <!-- 10190 Teléfono -->
@@ -870,7 +1018,8 @@
             </div>
             <button class="btn-info" onclick="openPopup('10190')">?</button>
           </div>
-          <input class="field-input" type="tel" data-input-type="tel" id="f10190" placeholder="Ej: 011 4XXX-XXXX">
+          <input class="field-input edit-only" type="tel" data-input-type="tel" id="f10190" placeholder="Ej: 011 4XXX-XXXX">
+          <div class="view-only dd-readonly" id="input-readonly-f10190">—</div>
         </div>
 
         </div>
@@ -894,7 +1043,8 @@
             </div>
             <button class="btn-info" onclick="openPopup('10200')">?</button>
           </div>
-          <input class="field-input" type="text" id="f10-010-10200" placeholder="Código o número de la vivienda">
+          <input class="field-input edit-only" type="text" id="f10-010-10200" placeholder="Código o número de la vivienda">
+          <div class="view-only dd-readonly" id="input-readonly-f10-010-10200">—</div>
         </div>
         <div class="field-row">
           <div class="field-meta">
@@ -905,10 +1055,11 @@
             <button class="btn-info" onclick="openPopup('10210')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-010-10210">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-010-10210')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-010-10210')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-010-10210">—</div>
             <div class="dropdown-list" id="dl-10-010-10210">
               <div class="dropdown-option" onclick="selectOption('10-010-10210','Casa A')">Casa A</div>
               <div class="dropdown-option" onclick="selectOption('10-010-10210','Casa B')">Casa B</div>
@@ -929,7 +1080,8 @@
             </div>
             <button class="btn-info" onclick="openPopup('10220')">?</button>
           </div>
-          <input class="field-input" type="number" id="f10-010-10220" min="0" inputmode="numeric" placeholder="Ej: 2">
+          <input class="field-input edit-only" type="number" id="f10-010-10220" min="0" inputmode="numeric" placeholder="Ej: 2">
+          <div class="view-only dd-readonly" id="input-readonly-f10-010-10220">—</div>
         </div>
         <div class="field-row">
           <div class="field-meta">
@@ -939,7 +1091,8 @@
             </div>
             <button class="btn-info" onclick="openPopup('10240')">?</button>
           </div>
-          <input class="field-input" type="number" id="f10-010-10240" min="0" inputmode="numeric" placeholder="Ej: 4">
+          <input class="field-input edit-only" type="number" id="f10-010-10240" min="0" inputmode="numeric" placeholder="Ej: 4">
+          <div class="view-only dd-readonly" id="input-readonly-f10-010-10240">—</div>
         </div>
         <div class="form-section-title">Servicios de la vivienda</div>
 
@@ -952,10 +1105,11 @@
             <button class="btn-info" onclick="openPopup('10250')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-020-10250">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-020-10250')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-020-10250')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-020-10250">—</div>
             <div class="dropdown-list" id="dl-10-020-10250">
               <div class="dropdown-option" onclick="selectOption('10-020-10250','Sí')">Sí</div>
               <div class="dropdown-option" onclick="selectOption('10-020-10250','No')">No</div>
@@ -972,10 +1126,11 @@
             <button class="btn-info" onclick="openPopup('10260')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-020-10260">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-020-10260')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-020-10260')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-020-10260">—</div>
             <div class="dropdown-list" id="dl-10-020-10260">
               <div class="dropdown-option" onclick="selectOption('10-020-10260','Red de gas natural')">Red de gas natural</div>
               <div class="dropdown-option" onclick="selectOption('10-020-10260','Gas en garrafa')">Gas en garrafa</div>
@@ -998,10 +1153,11 @@
             <button class="btn-info" onclick="openPopup('10270')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-020-10270">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-020-10270')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-020-10270')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-020-10270">—</div>
             <div class="dropdown-list" id="dl-10-020-10270">
               <div class="dropdown-option" onclick="selectOption('10-020-10270','Sí, conectadas')">Sí, conectadas</div>
               <div class="dropdown-option" onclick="selectOption('10-020-10270','Sí, sin conectar')">Sí, sin conectar</div>
@@ -1019,10 +1175,11 @@
             <button class="btn-info" onclick="openPopup('10280')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-020-10280">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-020-10280')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-020-10280')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-020-10280">—</div>
             <div class="dropdown-list" id="dl-10-020-10280">
               <div class="dropdown-option" onclick="selectOption('10-020-10280','Sí')">Sí</div>
               <div class="dropdown-option" onclick="selectOption('10-020-10280','No')">No</div>
@@ -1039,10 +1196,11 @@
             <button class="btn-info" onclick="openPopup('10290')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-020-10290">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-020-10290')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-020-10290')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-020-10290">—</div>
             <div class="dropdown-list" id="dl-10-020-10290">
               <div class="dropdown-option" onclick="selectOption('10-020-10290','6 o más veces por semana')">6 o más veces por semana</div>
               <div class="dropdown-option" onclick="selectOption('10-020-10290','3 a 5 veces por semana')">3 a 5 veces por semana</div>
@@ -1062,7 +1220,8 @@
             </div>
             <button class="btn-info" onclick="openPopup('10300')">?</button>
           </div>
-          <input class="field-input" type="number" id="f10-030-10300" min="0" inputmode="numeric" placeholder="Ej: 0">
+          <input class="field-input edit-only" type="number" id="f10-030-10300" min="0" inputmode="numeric" placeholder="Ej: 0">
+          <div class="view-only dd-readonly" id="input-readonly-f10-030-10300">—</div>
         </div>
         <div class="field-row">
           <div class="field-meta">
@@ -1073,10 +1232,11 @@
             <button class="btn-info" onclick="openPopup('10310')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-030-10310">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-030-10310')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-030-10310')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-030-10310">—</div>
             <div class="dropdown-list" id="dl-10-030-10310">
               <div class="dropdown-option" onclick="selectOption('10-030-10310','Sí')">Sí</div>
               <div class="dropdown-option" onclick="selectOption('10-030-10310','No')">No</div>
@@ -1093,10 +1253,11 @@
             <button class="btn-info" onclick="openPopup('10320')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-030-10320">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-030-10320')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-030-10320')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-030-10320">—</div>
             <div class="dropdown-list" id="dl-10-030-10320">
               <div class="dropdown-option" onclick="selectOption('10-030-10320','Sí')">Sí</div>
               <div class="dropdown-option" onclick="selectOption('10-030-10320','No')">No</div>
@@ -1113,10 +1274,11 @@
             <button class="btn-info" onclick="openPopup('10330')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-030-10330">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-030-10330')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-030-10330')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-030-10330">—</div>
             <div class="dropdown-list" id="dl-10-030-10330">
               <div class="dropdown-option" onclick="selectOption('10-030-10330','Trabajo formal')">Trabajo formal</div>
               <div class="dropdown-option" onclick="selectOption('10-030-10330','Trabajo informal')">Trabajo informal</div>
@@ -1145,10 +1307,11 @@
             <button class="btn-info" onclick="openPopup('10340')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-030-10340">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-030-10340')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-030-10340')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-030-10340">—</div>
             <div class="dropdown-list" id="dl-10-030-10340">
               <div class="dropdown-option" onclick="selectOption('10-030-10340','Sí')">Sí</div>
               <div class="dropdown-option" onclick="selectOption('10-030-10340','No')">No</div>
@@ -1167,10 +1330,11 @@
             <button class="btn-info" onclick="openPopup('10350')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-040-10350">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-040-10350')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-040-10350')">
               <span class="dd-value" id="ms-display-10-040-10350">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-040-10350">—</div>
             <div class="multiselect-list dropdown-list" id="dl-10-040-10350">
               <div class="ms-option" onclick="toggleMs('10-040-10350',this,'Vinchucas')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Vinchucas</div>
               <div class="ms-option" onclick="toggleMs('10-040-10350',this,'Roedores')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Roedores</div>
@@ -1179,7 +1343,6 @@
               <div class="ms-option" onclick="toggleMs('10-040-10350',this,'Murciélagos')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Murciélagos</div>
               <div class="ms-option" onclick="toggleMs('10-040-10350',this,'Otro')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Otro</div>
               <div class="ms-option" onclick="toggleMs('10-040-10350',this,'Ninguno')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Ninguno</div>
-              <button class="ms-done-btn" onclick="closeMsDd('10-040-10350')">Confirmar</button>
             </div>
           </div>
         </div>
@@ -1192,10 +1355,11 @@
             <button class="btn-info" onclick="openPopup('10360')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-040-10360">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-040-10360')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-040-10360')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-040-10360">—</div>
             <div class="dropdown-list" id="dl-10-040-10360">
               <div class="dropdown-option" onclick="selectOption('10-040-10360','Sí')">Sí</div>
               <div class="dropdown-option" onclick="selectOption('10-040-10360','No')">No</div>
@@ -1212,10 +1376,11 @@
             <button class="btn-info" onclick="openPopup('10370')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-040-10370">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-040-10370')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-040-10370')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-040-10370">—</div>
             <div class="dropdown-list" id="dl-10-040-10370">
               <div class="dropdown-option" onclick="selectOption('10-040-10370','Sí')">Sí</div>
               <div class="dropdown-option" onclick="selectOption('10-040-10370','No')">No</div>
@@ -1232,10 +1397,11 @@
             <button class="btn-info" onclick="openPopup('10380')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-040-10380">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-040-10380')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-040-10380')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-040-10380">—</div>
             <div class="dropdown-list" id="dl-10-040-10380">
               <div class="dropdown-option" onclick="selectOption('10-040-10380','Sí')">Sí</div>
               <div class="dropdown-option" onclick="selectOption('10-040-10380','No')">No</div>
@@ -1252,10 +1418,11 @@
             <button class="btn-info" onclick="openPopup('10382')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-040-10382">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-040-10382')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-040-10382')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-040-10382">—</div>
             <div class="dropdown-list" id="dl-10-040-10382">
               <div class="dropdown-option" onclick="selectOption('10-040-10382','Sí')">Sí</div>
               <div class="dropdown-option" onclick="selectOption('10-040-10382','No')">No</div>
@@ -1271,7 +1438,8 @@
             </div>
             <button class="btn-info" onclick="openPopup('10410')">?</button>
           </div>
-          <input class="field-input" type="number" id="f10-040-10410" min="0" inputmode="numeric" placeholder="Ej: 0">
+          <input class="field-input edit-only" type="number" id="f10-040-10410" min="0" inputmode="numeric" placeholder="Ej: 0">
+          <div class="view-only dd-readonly" id="input-readonly-f10-040-10410">—</div>
         </div>
         <div class="field-row">
           <div class="field-meta">
@@ -1281,7 +1449,8 @@
             </div>
             <button class="btn-info" onclick="openPopup('10420')">?</button>
           </div>
-          <input class="field-input" type="number" id="f10-040-10420" min="0" inputmode="numeric" placeholder="Ej: 0">
+          <input class="field-input edit-only" type="number" id="f10-040-10420" min="0" inputmode="numeric" placeholder="Ej: 0">
+          <div class="view-only dd-readonly" id="input-readonly-f10-040-10420">—</div>
         </div>
         <div class="field-row">
           <div class="field-meta">
@@ -1291,7 +1460,8 @@
             </div>
             <button class="btn-info" onclick="openPopup('10430')">?</button>
           </div>
-          <input class="field-input" type="number" id="f10-040-10430" min="0" inputmode="numeric" placeholder="Ej: 0">
+          <input class="field-input edit-only" type="number" id="f10-040-10430" min="0" inputmode="numeric" placeholder="Ej: 0">
+          <div class="view-only dd-readonly" id="input-readonly-f10-040-10430">—</div>
         </div>
         <div class="field-row">
           <div class="field-meta">
@@ -1301,7 +1471,8 @@
             </div>
             <button class="btn-info" onclick="openPopup('10440')">?</button>
           </div>
-          <input class="field-input" type="number" id="f10-040-10440" min="0" inputmode="numeric" placeholder="Ej: 0">
+          <input class="field-input edit-only" type="number" id="f10-040-10440" min="0" inputmode="numeric" placeholder="Ej: 0">
+          <div class="view-only dd-readonly" id="input-readonly-f10-040-10440">—</div>
         </div>
         <div class="field-row">
           <div class="field-meta">
@@ -1312,10 +1483,11 @@
             <button class="btn-info" onclick="openPopup('10450')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-10-040-10450">
-            <button class="dropdown-trigger" onclick="toggleDropdown('10-040-10450')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('10-040-10450')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-10-040-10450">—</div>
             <div class="dropdown-list" id="dl-10-040-10450">
               <div class="dropdown-option" onclick="selectOption('10-040-10450','Sí')">Sí</div>
               <div class="dropdown-option" onclick="selectOption('10-040-10450','No')">No</div>
@@ -1345,10 +1517,11 @@
             <button class="btn-info" onclick="openPopup('20-050-10460')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-20-050-10460">
-            <button class="dropdown-trigger" onclick="toggleDropdown('20-050-10460')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('20-050-10460')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-20-050-10460">—</div>
             <div class="dropdown-list" id="dl-20-050-10460">
               <div class="dropdown-option" onclick="selectOption('20-050-10460','Sí')">Sí</div>
               <div class="dropdown-option" onclick="selectOption('20-050-10460','No')">No</div>
@@ -1365,17 +1538,17 @@
             <button class="btn-info" onclick="openPopup('20-050-10480')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-20-050-10480">
-            <button class="dropdown-trigger" onclick="toggleDropdown('20-050-10480')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('20-050-10480')">
               <span class="dd-value" id="ms-display-20-050-10480">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-20-050-10480">—</div>
             <div class="multiselect-list dropdown-list" id="dl-20-050-10480">
               <div class="ms-option" onclick="toggleMs('20-050-10480',this,'A mi agente sanitario')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>A mi agente sanitario</div>
               <div class="ms-option" onclick="toggleMs('20-050-10480',this,'Al centro de salud de mi área')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Al centro de salud de mi área</div>
               <div class="ms-option" onclick="toggleMs('20-050-10480',this,'Al hospital de la zona')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Al hospital de la zona</div>
               <div class="ms-option" onclick="toggleMs('20-050-10480',this,'A un centro de salud de otra área')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>A un centro de salud de otra área</div>
               <div class="ms-option" onclick="toggleMs('20-050-10480',this,'Al sector privado')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Al sector privado</div>
-              <button class="ms-done-btn" onclick="closeMsDd('20-050-10480')">Confirmar</button>
             </div>
           </div>
         </div>
@@ -1388,10 +1561,11 @@
             <button class="btn-info" onclick="openPopup('20-050-10490')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-20-050-10490">
-            <button class="dropdown-trigger" onclick="toggleDropdown('20-050-10490')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('20-050-10490')">
               <span class="dd-value" id="ms-display-20-050-10490">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-20-050-10490">—</div>
             <div class="multiselect-list dropdown-list" id="dl-20-050-10490">
               <div class="ms-option" onclick="toggleMs('20-050-10490',this,'Se los brinda el centro de salud en forma gratuita')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Se los brinda el centro de salud en forma gratuita</div>
               <div class="ms-option" onclick="toggleMs('20-050-10490',this,'Los compra sin descuento')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Los compra sin descuento</div>
@@ -1400,7 +1574,6 @@
               <div class="ms-option" onclick="toggleMs('20-050-10490',this,'Se los cede un familiar/vecino')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Se los cede un familiar/vecino</div>
               <div class="ms-option" onclick="toggleMs('20-050-10490',this,'No los puede comprar')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>No los puede comprar</div>
               <div class="ms-option" onclick="toggleMs('20-050-10490',this,'No sabe')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>No sabe</div>
-              <button class="ms-done-btn" onclick="closeMsDd('20-050-10490')">Confirmar</button>
             </div>
           </div>
         </div>
@@ -1413,17 +1586,17 @@
             <button class="btn-info" onclick="openPopup('20-050-10500')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-20-050-10500">
-            <button class="dropdown-trigger" onclick="toggleDropdown('20-050-10500')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('20-050-10500')">
               <span class="dd-value" id="ms-display-20-050-10500">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-20-050-10500">—</div>
             <div class="multiselect-list dropdown-list" id="dl-20-050-10500">
               <div class="ms-option" onclick="toggleMs('20-050-10500',this,'Por medio del Agente Sanitario')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Por medio del Agente Sanitario</div>
               <div class="ms-option" onclick="toggleMs('20-050-10500',this,'Por vía telefónica')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Por vía telefónica</div>
               <div class="ms-option" onclick="toggleMs('20-050-10500',this,'Vía WhatsApp')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Vía WhatsApp</div>
               <div class="ms-option" onclick="toggleMs('20-050-10500',this,'De manera presencial en el centro de salud')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>De manera presencial en el centro de salud</div>
               <div class="ms-option" onclick="toggleMs('20-050-10500',this,'Vía web')"><div class="ms-checkbox"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" style="display:none"><path d="M1 3.5l2.5 2.5L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Vía web</div>
-              <button class="ms-done-btn" onclick="closeMsDd('20-050-10500')">Confirmar</button>
             </div>
           </div>
         </div>
@@ -1436,10 +1609,11 @@
             <button class="btn-info" onclick="openPopup('20-050-11500')">?</button>
           </div>
           <div class="custom-dropdown" id="dd-20-050-11500">
-            <button class="dropdown-trigger" onclick="toggleDropdown('20-050-11500')">
+            <button class="dropdown-trigger edit-only" onclick="toggleDropdown('20-050-11500')">
               <span class="dd-value">Selecciona</span>
               <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="view-only dd-readonly" id="readonly-20-050-11500">—</div>
             <div class="dropdown-list" id="dl-20-050-11500">
               <div class="dropdown-option" onclick="selectOption('20-050-11500','Menos de 1 mes')">Menos de 1 mes</div>
               <div class="dropdown-option" onclick="selectOption('20-050-11500','Entre 1 y 2 meses')">Entre 1 y 2 meses</div>
@@ -1460,7 +1634,7 @@
         <div class="accordion-body">
 
         <!-- Agregar paciente button -->
-        <div style="padding: 16px 52px 8px;">
+        <div class="edit-only" style="padding: 16px 52px 8px;">
           <button onclick="agregarPaciente()" style="
             width:100%; padding:14px 24px;
             border:none; border-radius:50px;
@@ -1500,44 +1674,17 @@
   </button>
 
 
-  <!-- Info popup overlay -->
-  <div class="popup-overlay" id="popup-overlay" onclick="handleOverlayClick(event)">
-    <div class="popup-card" id="popup-card">
-      <div class="popup-code" id="popup-code"></div>
-      <div class="popup-title" id="popup-title"></div>
-      <div class="popup-desc" id="popup-desc"></div>
-      <button class="popup-close" onclick="closePopup()">Cerrar</button>
-    </div>
+  <!-- Info bottom sheet -->
+  <div class="info-backdrop" id="info-backdrop" onclick="closePopup()"></div>
+  <div class="info-sheet" id="info-sheet">
+    <div class="info-handle"></div>
+    <div class="popup-code" id="popup-code"></div>
+    <div class="popup-title" id="popup-title"></div>
+    <div class="popup-desc" id="popup-desc"></div>
   </div>
 
-</div>
-
 <script>
-// ─── VARIABLES DE CONEXIÓN ────────────────────────────────────────────────────
-var RELEVAMIENTO = {
-  caps:       "36",
-  descripcion:"VisitAPS 2026",
-  nombre:     "VisitAPS 2026",
-  idRonda:    "36",
-  fechaDesde: "01/11/25",
-  fechaHasta: "01/11/32",
-  provincia:  "La Rioja",
-  region:     "1",
-  localidad:  "RIOJA_LC1",
-  identi:     "Prueba Rioja - test"
-};
-// ─────────────────────────────────────────────────────────────────────────────
-
-document.getElementById("caps-val").textContent    = RELEVAMIENTO.caps;
-document.getElementById("desc-val").textContent    = RELEVAMIENTO.descripcion;
-document.getElementById("nom-val").textContent     = RELEVAMIENTO.nombre;
-document.getElementById("idronda-val").textContent = RELEVAMIENTO.idRonda;
-document.getElementById("fdesde-val").textContent  = RELEVAMIENTO.fechaDesde;
-document.getElementById("fhasta-val").textContent  = RELEVAMIENTO.fechaHasta;
-document.getElementById("prov-val").textContent    = RELEVAMIENTO.provincia;
-document.getElementById("region-val").textContent  = RELEVAMIENTO.region;
-document.getElementById("loc-val").textContent     = RELEVAMIENTO.localidad;
-document.getElementById("identi-val").textContent  = RELEVAMIENTO.identi;
+// Header del detalle se puebla desde router.js (postMount) con datos reales de Supabase.
 
 function setAccHeight(body, open) {
   if (open) {
@@ -1762,7 +1909,8 @@ function openPopup(code) {
   document.getElementById("popup-code").textContent = "01-001-" + code;
   document.getElementById("popup-title").textContent = info.label;
   document.getElementById("popup-desc").textContent = info.desc;
-  document.getElementById("popup-overlay").classList.add("active");
+  document.getElementById("info-backdrop").classList.add("open");
+  document.getElementById("info-sheet").classList.add("open");
 }
 
 function toggleMs(code, el, val) {
@@ -1774,7 +1922,7 @@ function toggleMs(code, el, val) {
 function updateMsDisplay(code) {
   var selected = [];
   document.querySelectorAll('#dl-' + code + ' .ms-option.checked').forEach(function(o) {
-    var txt = o.textContent.replace('Confirmar','').trim();
+    var txt = o.textContent.trim();
     if (txt) selected.push(txt);
   });
   var disp = document.getElementById('ms-display-' + code);
@@ -1792,10 +1940,12 @@ function closeMsDd(code) {
 
 
 function closePopup() {
-  document.getElementById("popup-overlay").classList.remove("active");
+  document.getElementById("info-backdrop").classList.remove("open");
+  document.getElementById("info-sheet").classList.remove("open");
 }
+
 function handleOverlayClick(e) {
-  if (e.target === document.getElementById("popup-overlay")) closePopup();
+  if (e.target === document.getElementById("info-backdrop")) closePopup();
 }
 
 var openDD = null;
@@ -1809,6 +1959,7 @@ function getPortal() {
 window.closePortal = closePortal;
 function closePortal() {
   var p = getPortal();
+  if (!p) return; // portal no existe en DOM — ignorar
   p.style.display = "none";
   p.style.top = "auto";
   p.style.bottom = "auto";
@@ -1820,86 +1971,131 @@ function closePortal() {
   openDD = null;
 }
 
-function positionPortal(trigger) {
+function positionPortal(trigger, forceUp) {
   var p = getPortal();
-  var phone = document.querySelector(".phone");
+  var phone = document.getElementById('app');
   var phoneRect = phone.getBoundingClientRect();
   var trigRect  = trigger.getBoundingClientRect();
-  var maxH = 200;
+  var maxH = 280;
   var spaceBelow = phoneRect.bottom - trigRect.bottom - 8;
   var spaceAbove = trigRect.top - phoneRect.top - 8;
-  p.style.width = trigRect.width + "px";
-  p.style.left  = (trigRect.left - phoneRect.left) + "px";
-  p.style.maxHeight = Math.min(maxH, Math.max(spaceBelow, spaceAbove)) + "px";
-  if (spaceBelow >= Math.min(maxH, spaceBelow) || spaceBelow >= spaceAbove) {
-    // open downward
-    p.style.top    = (trigRect.bottom - phoneRect.top + 2) + "px";
-    p.style.bottom = "auto";
+  p.style.width = trigRect.width + 'px';
+  p.style.left  = (trigRect.left - phoneRect.left) + 'px';
+  p.style.maxHeight = Math.min(maxH, Math.max(spaceBelow, spaceAbove)) + 'px';
+  if (!forceUp && spaceBelow >= Math.min(maxH, spaceBelow) || spaceBelow >= spaceAbove) {
+    p.style.top    = (trigRect.bottom - phoneRect.top + 2) + 'px';
+    p.style.bottom = 'auto';
   } else {
-    // flip upward
-    p.style.bottom = (phoneRect.bottom - trigRect.top + 2) + "px";
-    p.style.top    = "auto";
+    p.style.bottom = (phoneRect.bottom - trigRect.top + 2) + 'px';
+    p.style.top    = 'auto';
   }
-  p.style.display = "block";
+  p.style.display = 'block';
 }
 
+/**
+ * Abre/cierra un dropdown usando el patrón "portal": las opciones se renderizan
+ * en #dd-portal (elemento fijo fuera del scroll) para evitar clipping por overflow.
+ * positionPortal() calcula espacio arriba/abajo y elige la mejor dirección.
+ * Para listas con >15 opciones se agrega un campo de búsqueda con filtro en tiempo real.
+ * Soporta tanto dropdowns simples como multiselect (.ms-option).
+ */
 function toggleDropdown(id) {
   var trigger = document.querySelector("#dd-" + id + " .dropdown-trigger");
-  var isOpen = (openDD === id);
+  var isOpen  = (openDD === id);
   closePortal();
   if (isOpen) return;
 
-  var srcList = document.getElementById("dl-" + id);
-  var p = getPortal();
+  var p    = getPortal();
+  var opts = window._ddOpts && window._ddOpts[id];
+  var items = [];
 
-  // Clone list items into portal
-  var items = srcList.querySelectorAll(".dropdown-option, .ms-option");
-  items.forEach(function(item) {
-    p.appendChild(item.cloneNode(true));
-  });
-
-  // Re-wire click handlers and mark selected
-  var currentVal = trigger.querySelector(".dd-value").textContent;
-  p.querySelectorAll(".dropdown-option").forEach(function(o) {
-    var val = o.textContent;
-    if (val === currentVal) o.classList.add("selected");
-    o.onclick = function() { selectOption(id, val); };
-  });
-
-  // ms-option handling
-  p.querySelectorAll(".ms-option").forEach(function(o) {
-    var origOpt = srcList.querySelector(".ms-option:not(.cloned)");
-    // restore checked state from source
-    var label = o.textContent.trim();
-    var srcOpts = srcList.querySelectorAll(".ms-option");
-    srcOpts.forEach(function(s) {
-      if (s.textContent.trim() === label && s.classList.contains("checked")) {
-        o.classList.add("checked");
-        var chk = o.querySelector("svg"); if (chk) chk.style.display = "block";
-      }
+  if (opts) {
+    items = opts.opciones;
+  } else {
+    var srcList = document.getElementById("dl-" + id);
+    if (!srcList) { positionPortal(trigger); openDD = id; return; }
+    srcList.querySelectorAll(".dropdown-option").forEach(function(item) {
+      items.push(item.textContent.trim());
     });
-    o.onclick = function(e) { e.stopPropagation(); toggleMsPortal(id, o, label); };
-  });
-
-  // Add confirm button for multiselects
-  if (srcList.querySelector(".ms-option")) {
-    var p2 = getPortal();
-    p2.style.maxHeight = "240px";
-    var btn = document.createElement("button");
-    btn.className = "ms-done-btn";
-    btn.textContent = "Confirmar";
-    btn.onclick = function() { syncMsFromPortal(id); closePortal(); };
-    p.appendChild(btn);
   }
 
-  positionPortal(trigger);
-  trigger.classList.add("open");
+  // Check for ms-options (multiselect) — handle separately
+  var srcListMs = document.getElementById("dl-" + id);
+  var msItems = srcListMs ? srcListMs.querySelectorAll(".ms-option") : [];
+  if (msItems.length > 0) {
+    // Clone ms-options into portal
+    msItems.forEach(function(item) {
+      p.appendChild(item.cloneNode(true));
+    });
+    p.querySelectorAll(".ms-option").forEach(function(o) {
+      var label = o.textContent.trim();
+      var srcOpts = srcListMs.querySelectorAll(".ms-option");
+      srcOpts.forEach(function(s) {
+        if (s.textContent.trim() === label && s.classList.contains("checked")) {
+          o.classList.add("checked");
+          var chk = o.querySelector("svg"); if (chk) chk.style.display = "block";
+        }
+      });
+      o.onclick = function(e) { e.stopPropagation(); toggleMsPortal(id, o, label); };
+    });
+    positionPortal(trigger);
+    if (trigger) trigger.classList.add("open");
+    openDD = id;
+    return;
+  }
+
+  var needsSearch = items.length > 15;
+  var forceUp = needsSearch;
+
+  // Campo de búsqueda para listas largas
+  if (needsSearch) {
+    var searchWrap = document.createElement('div');
+    searchWrap.style.cssText = 'padding:8px 12px 10px;border-bottom:1px solid var(--cream-dark);background:var(--cream);';
+    var searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = 'Buscar...';
+    searchInput.style.cssText = 'width:100%;border:none;border-bottom:1px solid var(--cream-dark);background:transparent;font-family:Montserrat,sans-serif;font-size:12px;font-weight:400;color:var(--navy);outline:none;padding:4px 0;transition:border-color 0.2s;';
+    searchInput.addEventListener('focus', function() { searchInput.style.borderBottomColor = 'var(--steel)'; });
+    searchInput.addEventListener('blur', function() { searchInput.style.borderBottomColor = 'var(--cream-dark)'; });
+    searchInput.addEventListener('input', function() {
+      var q = searchInput.value.toLowerCase();
+      p.querySelectorAll('.dropdown-option').forEach(function(opt) {
+        opt.style.display = opt.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+      });
+    });
+    searchWrap.appendChild(searchInput);
+    p.appendChild(searchWrap);
+    setTimeout(function() { searchInput.focus(); }, 50);
+  }
+
+  // Agregar opciones
+  var currentVal = '';
+  if (trigger) {
+    var ddVal = trigger.querySelector('.dd-value');
+    currentVal = ddVal ? ddVal.textContent : trigger.textContent.trim();
+  }
+  items.forEach(function(val) {
+    var div = document.createElement('div');
+    div.className = 'dropdown-option' + (val === currentVal ? ' selected' : '');
+    div.textContent = val;
+    div.onclick = function() { selectOption(id, val); };
+    p.appendChild(div);
+  });
+
+  positionPortal(trigger, forceUp);
+  if (trigger) trigger.classList.add('open');
   openDD = id;
 }
 
 function selectOption(id, value) {
   var trigger = document.querySelector("#dd-" + id + " .dropdown-trigger");
-  trigger.querySelector(".dd-value").textContent = value;
+  var ddVal = trigger.querySelector('.dd-value');
+  if (ddVal) {
+    ddVal.textContent = value;
+  } else {
+    // fallback si no tiene span
+    trigger.childNodes[0].textContent = value;
+  }
   trigger.classList.add("has-value");
   // update source list selected state
   var srcList = document.getElementById("dl-" + id);
@@ -1912,6 +2108,7 @@ function selectOption(id, value) {
 function toggleMsPortal(id, el, val) {
   el.classList.toggle("checked");
   var svg = el.querySelector("svg"); if (svg) svg.style.display = el.classList.contains("checked") ? "block" : "none";
+  syncMsFromPortal(id);
 }
 
 function syncMsFromPortal(id) {
@@ -1955,8 +2152,298 @@ document.addEventListener("click", function(e) {
 function closeMsDd(id) { closePortal(); }
 
 var pacienteCount = 0;
-var pacienteFieldsTemplate = '\n        <div class="form-section-title">Datos filiatorios</div>\n\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10510</div>\n              <div class="field-label">Apellido</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10510\')">?</button>\n          </div>\n          <input class="field-input" type="text" id="f30-101-10510" placeholder="Ingrese el apellido">\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10520</div>\n              <div class="field-label">Nombre</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10520\')">?</button>\n          </div>\n          <input class="field-input" type="text" id="f30-101-10520" placeholder="Ingrese el nombre">\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10530</div>\n              <div class="field-label">Fecha de nacimiento</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10530\')">?</button>\n          </div>\n          <div class="date-wrap" id="datewrap-30-101-10530-PACNUM">\n            <div class="date-display" id="date-display-30-101-10530-PACNUM" onclick="toggleCal(\'30-101-10530-PACNUM\')">\n              <span class="placeholder" id="date-text-30-101-10530-PACNUM">dd-mm-aaaa</span>\n              <svg class="date-icon" width="14" height="14" viewBox="0 0 24 24" fill="none">\n                <rect x="3" y="4" width="18" height="18" rx="2" stroke="#1B2A4A" stroke-width="1.6"/>\n                <path d="M16 2v4M8 2v4M3 10h18" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round"/>\n              </svg>\n            </div>\n            <div class="cal-popup" id="cal-30-101-10530-PACNUM">\n              <div class="cal-header">\n                <button class="cal-nav" onclick="calNav(\'30-101-10530-PACNUM\',-1)">\n                  <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M6 1L1 6l5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>\n                </button>\n                <span class="cal-month" id="cal-month-30-101-10530-PACNUM"></span>\n                <button class="cal-nav" onclick="calNav(\'30-101-10530-PACNUM\',1)">\n                  <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>\n                </button>\n              </div>\n              <div class="cal-weekdays">\n                <div class="cal-wd">Lu</div><div class="cal-wd">Ma</div><div class="cal-wd">Mi</div>\n                <div class="cal-wd">Ju</div><div class="cal-wd">Vi</div><div class="cal-wd">Sa</div><div class="cal-wd">Do</div>\n              </div>\n              <div class="cal-days" id="cal-days-30-101-10530-PACNUM"></div>\n            </div>\n          </div>\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10550</div>\n              <div class="field-label">Sexo</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10550\')">?</button>\n          </div>\n          <div class="custom-dropdown" id="dd-30-101-10550-PACNUM">\n            <button class="dropdown-trigger" onclick="toggleDropdown(\'30-101-10550-PACNUM\')">\n              <span class="dd-value">Selecciona</span>\n              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\n            </button>\n            <div class="dropdown-list" id="dl-30-101-10550-PACNUM">\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10550\',\'Masculino\')">Masculino</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10550\',\'Femenino\')">Femenino</div>\n            </div>\n          </div>\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10560</div>\n              <div class="field-label">DNI</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10560\')">?</button>\n          </div>\n          <input class="field-input" type="number" id="f30-101-10560" placeholder="Ej: 12345678" min="0" inputmode="numeric">\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10570</div>\n              <div class="field-label">Situación de la persona en la vivienda</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10570\')">?</button>\n          </div>\n          <div class="custom-dropdown" id="dd-30-101-10570-PACNUM">\n            <button class="dropdown-trigger" onclick="toggleDropdown(\'30-101-10570-PACNUM\')">\n              <span class="dd-value">Selecciona</span>\n              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\n            </button>\n            <div class="dropdown-list" id="dl-30-101-10570-PACNUM">\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10570\',\'Ocupante\')">Ocupante</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10570\',\'Visitante\')">Visitante</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10570\',\'Falleció\')">Falleció</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10570\',\'Se mudó\')">Se mudó</div>\n            </div>\n          </div>\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10580</div>\n              <div class="field-label">Contacto telefónico</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10580\')">?</button>\n          </div>\n          <input class="field-input" type="number" id="f30-101-10580" placeholder="Ej: 3804123456" min="0" inputmode="numeric">\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10590</div>\n              <div class="field-label">Contacto mail</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10590\')">?</button>\n          </div>\n          <input class="field-input" type="text" id="f30-101-10590" placeholder="ejemplo@mail.com">\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10600</div>\n              <div class="field-label">País de nacimiento</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10600\')">?</button>\n          </div>\n          <div class="custom-dropdown" id="dd-30-101-10600-PACNUM">\n            <button class="dropdown-trigger" onclick="toggleDropdown(\'30-101-10600-PACNUM\')">\n              <span class="dd-value">Selecciona</span>\n              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\n            </button>\n            <div class="dropdown-list" id="dl-30-101-10600-PACNUM">\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10600\',\'Argentina\')">Argentina</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10600\',\'Otro\')">Otro</div>\n            </div>\n          </div>\n        </div>\n        <div class="field-row">\n          <div class="field-meta">\n            <div class="field-labels">\n              <div class="field-code">30-101-10610</div>\n              <div class="field-label">Pueblos Originarios</div>\n            </div>\n            <button class="btn-info" onclick="openPopup(\'30-101-10610\')">?</button>\n          </div>\n          <div class="custom-dropdown" id="dd-30-101-10610-PACNUM">\n            <button class="dropdown-trigger" onclick="toggleDropdown(\'30-101-10610-PACNUM\')">\n              <span class="dd-value">Selecciona</span>\n              <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\n            </button>\n            <div class="dropdown-list" id="dl-30-101-10610-PACNUM">\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'No pertenece\')">No pertenece</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Aonikenk\')">Aonikenk</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Atacama\')">Atacama</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Avipón\')">Avipón</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Aymara\')">Aymara</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Chana\')">Chana</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Chané\')">Chané</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Charrúa\')">Charrúa</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Chicha\')">Chicha</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Chorote\')">Chorote</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Chulupí/Nivaclé\')">Chulupí/Nivaclé</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Churumata\')">Churumata</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Comechingón\')">Comechingón</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Corundí\')">Corundí</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Diaguita\')">Diaguita</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Diaguita Calchaqu\')">Diaguita Calchaqu</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Fiscara\')">Fiscara</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Guaraní\')">Guaraní</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Guarayo\')">Guarayo</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Guaycuru\')">Guaycuru</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Gúnún a Kúna\')">Gúnún a Kúna</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Haush/Maneken\')">Haush/Maneken</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Huarpe\')">Huarpe</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Iogys\')">Iogys</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Juijui\')">Juijui</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Kolla\')">Kolla</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Kolla Atacameño\')">Kolla Atacameño</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Lule\')">Lule</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Lule Vilela\')">Lule Vilela</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Maká\')">Maká</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Mapuche\')">Mapuche</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Mapuche Tehuelche\')">Mapuche Tehuelche</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Mbya Guaraní\')">Mbya Guaraní</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Minuán\')">Minuán</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Moqoit/Mocoví\')">Moqoit/Mocoví</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Ocloya\')">Ocloya</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Omaguaca\')">Omaguaca</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Pilagá\')">Pilagá</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Qom/Toba\')">Qom/Toba</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Quechua\')">Quechua</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Querandí\')">Querandí</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Ranquel\')">Ranquel</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Sanavirón\')">Sanavirón</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Selknam/Ona\')">Selknam/Ona</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Tapiete\')">Tapiete</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Tastil\')">Tastil</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Tehuelche\')">Tehuelche</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Toara\')">Toara</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Tonokoté\')">Tonokoté</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Vilela\')">Vilela</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Wayteca/Chono\')">Wayteca/Chono</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Weenhayek\')">Weenhayek</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Wichi\')">Wichi</div>\n              <div class="dropdown-option" onclick="selectOption(\'30-101-10610\',\'Yagán\')">Yagán</div>\n            </div>\n          </div>\n        </div>\n        <div class="form-section-title" style="border-top:none;padding-top:8px;">\n          <button onclick="confirmarEliminarPaciente(PACNUM_PLACEHOLDER)" style="\n            width:100%; padding:11px 24px;\n            border:none; border-radius:50px;\n            background: var(--gold);\n            color: var(--navy);\n            font-family:\'Montserrat\',sans-serif;\n            font-size:12px; font-weight:600;\n            letter-spacing:0.03em;\n            cursor:pointer;\n            display:flex; align-items:center; justify-content:center; gap:8px;\n            box-shadow: 0 3px 10px rgba(201,168,76,0.25);\n            transition: background 0.2s;\n            margin-top:8px;\n          " onmouseover="this.style.background=\'var(--gold-light)\'" onmouseout="this.style.background=\'var(--gold)\'">\n            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">\n              <polyline points="3 6 5 6 21 6" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>\n              <path d="M19 6l-1 14H6L5 6" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>\n              <path d="M10 11v6M14 11v6" stroke="var(--navy)" stroke-width="2" stroke-linecap="round"/>\n              <path d="M9 6V4h6v2" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>\n            </svg>\n            Eliminar paciente\n          </button>\n        </div>\n';
+/**
+ * pacienteFieldsTemplate — Template HTML para cada paciente del relevamiento.
+ *
+ * Usa tokens de reemplazo: PACNUM_PLACEHOLDER (número visible) y -PACNUM (sufijo de IDs)
+ * que agregarPaciente() reemplaza con el nro real (ej: PACNUM_PLACEHOLDER→1, -PACNUM→-p1).
+ *
+ * ⚠️  ANGULAR MIGRATION NOTE:
+ * Este string gigante existe porque no hay framework de templating.
+ * En Angular, reemplazar completamente por un componente PacienteComponent:
+ *
+ *   <app-paciente
+ *     *ngFor="let pac of pacientes"
+ *     [paciente]="pac"
+ *     [mode]="mode"
+ *   />
+ *
+ * Los campos y sus tipos están definidos en PACIENTE_FIELDS (form-sync.js).
+ * El sistema edit-only/view-only se reemplaza por [mode] binding + NgIf.
+ * Los IDs con sufijo -pN se reemplazan por índice del ngFor.
+ * El botón "Eliminar paciente" va en el componente con (eliminar) EventEmitter.
+ *
+ * No modificar este template manualmente — reescribir como componente.
+ */
+var pacienteFieldsTemplate = `
+  <div class="form-section-title">Datos filiatorios</div>
 
+  <div class="field-row">
+    <div class="field-meta">
+      <div class="field-labels">
+        <div class="field-code">30-101-10510</div>
+        <div class="field-label">Apellido</div>
+      </div>
+      <button class="btn-info" onclick="openPopup('30-101-10510')">?</button>
+    </div>
+    <input class="field-input edit-only" type="text" id="f30-101-10510-PACNUM" placeholder="Ingrese el apellido">
+    <div class="view-only dd-readonly" id="input-readonly-f30-101-10510-PACNUM">—</div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-meta">
+      <div class="field-labels">
+        <div class="field-code">30-101-10520</div>
+        <div class="field-label">Nombre</div>
+      </div>
+      <button class="btn-info" onclick="openPopup('30-101-10520')">?</button>
+    </div>
+    <input class="field-input edit-only" type="text" id="f30-101-10520-PACNUM" placeholder="Ingrese el nombre">
+    <div class="view-only dd-readonly" id="input-readonly-f30-101-10520-PACNUM">—</div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-meta">
+      <div class="field-labels">
+        <div class="field-code">30-101-10530</div>
+        <div class="field-label">Fecha de nacimiento</div>
+      </div>
+      <button class="btn-info" onclick="openPopup('30-101-10530')">?</button>
+    </div>
+    <div class="date-wrap edit-only" id="datewrap-30-101-10530-PACNUM">
+      <div class="date-display" id="date-display-30-101-10530-PACNUM" onclick="toggleCal('30-101-10530-PACNUM')">
+        <span class="placeholder" id="date-text-30-101-10530-PACNUM">dd-mm-aaaa</span>
+        <svg class="date-icon" width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="4" width="18" height="18" rx="2" stroke="#1B2A4A" stroke-width="1.6"/>
+          <path d="M16 2v4M8 2v4M3 10h18" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="cal-popup" id="cal-30-101-10530-PACNUM">
+        <div class="cal-header">
+          <button class="cal-nav" onclick="calNav('30-101-10530-PACNUM',-1)">
+            <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M6 1L1 6l5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <span class="cal-month" id="cal-month-30-101-10530-PACNUM"></span>
+          <button class="cal-nav" onclick="calNav('30-101-10530-PACNUM',1)">
+            <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="#1B2A4A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="cal-weekdays">
+          <div class="cal-wd">Lu</div><div class="cal-wd">Ma</div><div class="cal-wd">Mi</div>
+          <div class="cal-wd">Ju</div><div class="cal-wd">Vi</div><div class="cal-wd">Sa</div><div class="cal-wd">Do</div>
+        </div>
+        <div class="cal-days" id="cal-days-30-101-10530-PACNUM"></div>
+      </div>
+    </div>
+    <div class="view-only dd-readonly" id="date-readonly-30-101-10530-PACNUM">—</div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-meta">
+      <div class="field-labels">
+        <div class="field-code">30-101-10550</div>
+        <div class="field-label">Sexo</div>
+      </div>
+      <button class="btn-info" onclick="openPopup('30-101-10550')">?</button>
+    </div>
+    <div class="custom-dropdown" id="dd-30-101-10550-PACNUM">
+      <button class="dropdown-trigger edit-only" onclick="toggleDropdown('30-101-10550-PACNUM')">
+        <span class="dd-value">Selecciona</span>
+        <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="view-only dd-readonly" id="readonly-30-101-10550-PACNUM">—</div>
+      <div class="dropdown-list" id="dl-30-101-10550-PACNUM">
+        <div class="dropdown-option" onclick="selectOption('30-101-10550-PACNUM','Masculino')">Masculino</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10550-PACNUM','Femenino')">Femenino</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-meta">
+      <div class="field-labels">
+        <div class="field-code">30-101-10560</div>
+        <div class="field-label">DNI</div>
+      </div>
+      <button class="btn-info" onclick="openPopup('30-101-10560')">?</button>
+    </div>
+    <input class="field-input edit-only" type="number" id="f30-101-10560-PACNUM" placeholder="Ej: 12345678" min="0" inputmode="numeric">
+    <div class="view-only dd-readonly" id="input-readonly-f30-101-10560-PACNUM">—</div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-meta">
+      <div class="field-labels">
+        <div class="field-code">30-101-10570</div>
+        <div class="field-label">Situación de la persona en la vivienda</div>
+      </div>
+      <button class="btn-info" onclick="openPopup('30-101-10570')">?</button>
+    </div>
+    <div class="custom-dropdown" id="dd-30-101-10570-PACNUM">
+      <button class="dropdown-trigger edit-only" onclick="toggleDropdown('30-101-10570-PACNUM')">
+        <span class="dd-value">Selecciona</span>
+        <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="view-only dd-readonly" id="readonly-30-101-10570-PACNUM">—</div>
+      <div class="dropdown-list" id="dl-30-101-10570-PACNUM">
+        <div class="dropdown-option" onclick="selectOption('30-101-10570-PACNUM','Ocupante')">Ocupante</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10570-PACNUM','Visitante')">Visitante</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10570-PACNUM','Falleció')">Falleció</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10570-PACNUM','Se mudó')">Se mudó</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-meta">
+      <div class="field-labels">
+        <div class="field-code">30-101-10580</div>
+        <div class="field-label">Contacto telefónico</div>
+      </div>
+      <button class="btn-info" onclick="openPopup('30-101-10580')">?</button>
+    </div>
+    <input class="field-input edit-only" type="number" id="f30-101-10580-PACNUM" placeholder="Ej: 3804123456" min="0" inputmode="numeric">
+    <div class="view-only dd-readonly" id="input-readonly-f30-101-10580-PACNUM">—</div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-meta">
+      <div class="field-labels">
+        <div class="field-code">30-101-10590</div>
+        <div class="field-label">Contacto mail</div>
+      </div>
+      <button class="btn-info" onclick="openPopup('30-101-10590')">?</button>
+    </div>
+    <input class="field-input edit-only" type="text" id="f30-101-10590-PACNUM" placeholder="ejemplo@mail.com">
+    <div class="view-only dd-readonly" id="input-readonly-f30-101-10590-PACNUM">—</div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-meta">
+      <div class="field-labels">
+        <div class="field-code">30-101-10600</div>
+        <div class="field-label">País de nacimiento</div>
+      </div>
+      <button class="btn-info" onclick="openPopup('30-101-10600')">?</button>
+    </div>
+    <div class="custom-dropdown" id="dd-30-101-10600-PACNUM">
+      <button class="dropdown-trigger edit-only" onclick="toggleDropdown('30-101-10600-PACNUM')">
+        <span class="dd-value">Selecciona</span>
+        <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="view-only dd-readonly" id="readonly-30-101-10600-PACNUM">—</div>
+      <div class="dropdown-list" id="dl-30-101-10600-PACNUM">
+        <div class="dropdown-option" onclick="selectOption('30-101-10600-PACNUM','Argentina')">Argentina</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10600-PACNUM','Otro')">Otro</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-meta">
+      <div class="field-labels">
+        <div class="field-code">30-101-10610</div>
+        <div class="field-label">Pueblos Originarios</div>
+      </div>
+      <button class="btn-info" onclick="openPopup('30-101-10610')">?</button>
+    </div>
+    <div class="custom-dropdown" id="dd-30-101-10610-PACNUM">
+      <button class="dropdown-trigger edit-only" onclick="toggleDropdown('30-101-10610-PACNUM')">
+        <span class="dd-value">Selecciona</span>
+        <svg class="dropdown-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="#1B2A4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="view-only dd-readonly" id="readonly-30-101-10610-PACNUM">—</div>
+      <div class="dropdown-list" id="dl-30-101-10610-PACNUM">
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','No pertenece')">No pertenece</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Aonikenk')">Aonikenk</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Atacama')">Atacama</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Avipón')">Avipón</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Aymara')">Aymara</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Chana')">Chana</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Chané')">Chané</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Charrúa')">Charrúa</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Chicha')">Chicha</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Chorote')">Chorote</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Chulupí/Nivaclé')">Chulupí/Nivaclé</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Churumata')">Churumata</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Comechingón')">Comechingón</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Corundí')">Corundí</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Diaguita')">Diaguita</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Diaguita Calchaqu')">Diaguita Calchaqu</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Fiscara')">Fiscara</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Guaraní')">Guaraní</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Guarayo')">Guarayo</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Guaycuru')">Guaycuru</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Gúnún a Kúna')">Gúnún a Kúna</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Haush/Maneken')">Haush/Maneken</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Huarpe')">Huarpe</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Iogys')">Iogys</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Juijui')">Juijui</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Kolla')">Kolla</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Kolla Atacameño')">Kolla Atacameño</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Lule')">Lule</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Lule Vilela')">Lule Vilela</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Maká')">Maká</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Mapuche')">Mapuche</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Mapuche Tehuelche')">Mapuche Tehuelche</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Mbya Guaraní')">Mbya Guaraní</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Minuán')">Minuán</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Moqoit/Mocoví')">Moqoit/Mocoví</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Ocloya')">Ocloya</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Omaguaca')">Omaguaca</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Pilagá')">Pilagá</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Qom/Toba')">Qom/Toba</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Quechua')">Quechua</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Querandí')">Querandí</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Ranquel')">Ranquel</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Sanavirón')">Sanavirón</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Selknam/Ona')">Selknam/Ona</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Tapiete')">Tapiete</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Tastil')">Tastil</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Tehuelche')">Tehuelche</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Toara')">Toara</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Tonokoté')">Tonokoté</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Vilela')">Vilela</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Wayteca/Chono')">Wayteca/Chono</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Weenhayek')">Weenhayek</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Wichi')">Wichi</div>
+        <div class="dropdown-option" onclick="selectOption('30-101-10610-PACNUM','Yagán')">Yagán</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section-title edit-only" style="border-top:none;padding-top:8px;">
+    <button onclick="confirmarEliminarPaciente(PACNUM_PLACEHOLDER)" style="
+      width:100%; padding:11px 24px;
+      border:none; border-radius:50px;
+      background: var(--gold);
+      color: var(--navy);
+      font-family:'Montserrat',sans-serif;
+      font-size:12px; font-weight:600;
+      letter-spacing:0.03em;
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      box-shadow: 0 3px 10px rgba(201,168,76,0.25);
+      transition: background 0.2s;
+      margin-top:8px;
+    " onmouseover="this.style.background='var(--gold-light)'" onmouseout="this.style.background='var(--gold)'">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+        <polyline points="3 6 5 6 21 6" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M19 6l-1 14H6L5 6" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M10 11v6M14 11v6" stroke="var(--navy)" stroke-width="2" stroke-linecap="round"/>
+        <path d="M9 6V4h6v2" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Eliminar paciente
+    </button>
+  </div>
+`;
+
+/**
+ * Crea una nueva sección accordion para un paciente: reemplaza los tokens del template
+ * (PACNUM_PLACEHOLDER → nro, -PACNUM → -pN), inicializa los date pickers internos,
+ * y hace scroll hasta la nueva sección. FormSync detecta los campos nuevos automáticamente
+ * por el sufijo -pN en el ID del campo.
+ */
 function agregarPaciente() {
   pacienteCount++;
   var n = pacienteCount;
@@ -1997,18 +2484,13 @@ function agregarPaciente() {
 }
 
 function confirmarEliminarPaciente(n) {
-  var overlay = document.getElementById("popup-overlay");
+  var sheet = document.getElementById("info-sheet");
   document.getElementById("popup-code").textContent = "";
   document.getElementById("popup-title").textContent = "¿Estás seguro?";
   document.getElementById("popup-desc").textContent =
     "¿Deseas eliminar el Paciente Nro. " + n + "? Esta acción no se puede deshacer.";
 
-  // Replace close button with confirm + cancel
-  var card = document.getElementById("popup-card");
-  var oldBtn = card.querySelector(".popup-close");
-  oldBtn.style.display = "none";
-
-  var existing = card.querySelector(".del-confirm-btns");
+  var existing = sheet.querySelector(".del-confirm-btns");
   if (existing) existing.remove();
 
   var btns = document.createElement("div");
@@ -2016,32 +2498,64 @@ function confirmarEliminarPaciente(n) {
   btns.style.cssText = "display:flex;gap:10px;margin-top:20px;";
 
   var btnCancel = document.createElement("button");
-  btnCancel.className = "popup-close";
-  btnCancel.style.cssText = "flex:1;background:var(--cream-dark);color:var(--navy);";
+  btnCancel.style.cssText = "flex:1;padding:12px;border:none;border-radius:50px;background:var(--cream-dark);color:var(--navy);font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;cursor:pointer;";
   btnCancel.textContent = "Cancelar";
   btnCancel.onclick = function() {
-    oldBtn.style.display = "";
     btns.remove();
     closePopup();
   };
 
   var btnDel = document.createElement("button");
-  btnDel.className = "popup-close";
-  btnDel.style.cssText = "flex:1;background:var(--gold);color:var(--navy);";
+  btnDel.style.cssText = "flex:1;padding:12px;border:none;border-radius:50px;background:var(--gold);color:var(--navy);font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;cursor:pointer;";
   btnDel.textContent = "Eliminar";
   btnDel.onclick = function() {
     var acc = document.getElementById("acc-paciente-" + n);
     if (acc) acc.remove();
-    oldBtn.style.display = "";
     btns.remove();
     closePopup();
   };
 
   btns.appendChild(btnCancel);
   btns.appendChild(btnDel);
-  card.appendChild(btns);
-  overlay.classList.add("active");
+  sheet.appendChild(btns);
+  document.getElementById("info-backdrop").classList.add("open");
+  sheet.classList.add("open");
 }
+
+function abrirEditIdenti() {
+  var current = document.getElementById('identi-val').textContent;
+  var input = document.getElementById('bs-identi-input');
+  input.value = current === 'Sin identificación' ? '' : current;
+  document.getElementById('bs-identi-error').textContent = '';
+  document.getElementById('bs-identi-backdrop').classList.add('open');
+  document.getElementById('bs-identi-sheet').classList.add('open');
+  setTimeout(function() { input.focus(); }, 350);
+}
+
+function cerrarEditIdenti() {
+  document.getElementById('bs-identi-backdrop').classList.remove('open');
+  document.getElementById('bs-identi-sheet').classList.remove('open');
+}
+
+document.getElementById('bs-identi-guardar').addEventListener('click', function() {
+  var input = document.getElementById('bs-identi-input');
+  var val = input.value.trim();
+  var errEl = document.getElementById('bs-identi-error');
+  if (!val) { errEl.textContent = 'La identificación no puede estar vacía'; return; }
+  errEl.textContent = '';
+
+  var btn = document.getElementById('bs-identi-guardar');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+
+  var relevId = window.FormSync.getRelevamientoId();
+  window.VisitData.updateIdenti(relevId, val).then(function(result) {
+    btn.disabled = false; btn.textContent = 'Guardar';
+    if (result.error) { errEl.textContent = result.error.message; return; }
+    document.getElementById('identi-val').textContent = val;
+    cerrarEditIdenti();
+    if (window.showToast) window.showToast('Identificación actualizada');
+  });
+});
 </script>
 
 </body>

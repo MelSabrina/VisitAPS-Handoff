@@ -2,70 +2,15 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=390, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>VisitAPS – Perfil</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html, body {
-    width: 100%;
-    height: 100dvh;
-    margin: 0 auto;
-    background: #C8C4BC;
-    font-family: 'Montserrat', sans-serif;
-    display: flex;
-    justify-content: center;
-  }
-
-  .phone {
-    width: 100%;
-    max-width: 390px;
-    height: 100dvh;
-    background: var(--cream);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    overflow-x: hidden;
-  }
-
-  :root {
-    --navy:       #1B2A4A;
-    --navy-light: #243660;
-    --gold:       #C9A84C;
-    --gold-light: #D9BC72;
-    --cream:      #EDEAE4;
-    --cream-dark: #DDD9D2;
-    --text-main:  #2C2C2C;
-    --text-soft:  #7A7672;
-    --gray-btn:   #8A8580;
-    --steel:      #5A7290;
-    --steel-light:#6B84A3;
-  }
-
-  
-
-  
-
-  .phone::before {
-    content: '';
-    position: absolute;
-    top: -60px; left: 50%;
-    transform: translateX(-50%);
-    width: 300px; height: 300px;
-    background: radial-gradient(circle, rgba(201,168,76,0.10) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
   .top-bar {
     width: 100%; height: 4px;
-    background: linear-gradient(90deg, #1B2A4A 0%, #C9A84C 50%, #1B2A4A 100%);
+    background: var(--gold);
     flex-shrink: 0;
-    position: relative; z-index: 1;
   }
-
 
   .top-nav {
     width: 100%;
@@ -73,7 +18,6 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: relative; z-index: 1;
     flex-shrink: 0;
   }
 
@@ -100,14 +44,21 @@
   }
   .logo-top-right svg { width: 100%; height: auto; }
 
+  .scroll-body {
+    flex: 1; width: 100%;
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    display: flex; flex-direction: column;
+    align-items: center;
+  }
+  .scroll-body::-webkit-scrollbar { display: none; }
+
   .content {
-    flex: 1;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 0 52px 36px;
-    position: relative; z-index: 1;
   }
 
   .page-title {
@@ -139,7 +90,6 @@
     margin-top: 18px;
     display: flex;
     flex-direction: column;
-    gap: 0;
     animation: fadeUp 0.5s 0.15s ease both;
   }
 
@@ -163,6 +113,19 @@
     color: var(--navy);
     letter-spacing: 0.01em;
   }
+
+  .nivel-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .nivel-badge.agente           { background: var(--badge-steel-bg); color: var(--steel); }
+  .nivel-badge.supervisor       { background: var(--badge-teal-bg);  color: var(--badge-teal-text); }
+  .nivel-badge.admin_provincial { background: var(--badge-gold-bg);  color: var(--badge-gold-text); }
 
   .action-buttons {
     width: 100%;
@@ -192,7 +155,7 @@
 
   .btn-action.steel {
     background: var(--steel);
-    color: #F0EDE8;
+    color: var(--cream);
     box-shadow: 0 4px 18px rgba(90,114,144,0.25);
   }
   .btn-action.steel:hover {
@@ -203,7 +166,7 @@
 
   .btn-action.gold {
     background: var(--gold);
-    color: #1B2A4A;
+    color: var(--navy);
     box-shadow: 0 4px 14px rgba(201,168,76,0.30);
   }
   .btn-action.gold:hover {
@@ -228,7 +191,7 @@
 </style>
 </head>
 <body>
-<div class="phone">
+<div class="bg-glow"></div>
   <div class="top-bar"></div>
 
 
@@ -282,6 +245,7 @@
     </div>
   </div>
 
+  <div class="scroll-body">
   <div class="content">
 
     <h1 class="page-title">Perfil</h1>
@@ -331,7 +295,7 @@
       </div>
       <div class="field-row">
         <div class="field-label">Nivel de acceso</div>
-        <div class="field-value">Agente</div>
+        <div class="field-value" id="nivel-acceso-badge">Agente</div>
       </div>
     </div>
 
@@ -354,6 +318,6 @@
     </div>
 
   </div>
-</div>
+  </div>
 </body>
 </html>

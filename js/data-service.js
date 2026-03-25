@@ -82,7 +82,7 @@
      */
     getRelevamientoCompleto: function (relevamientoId) {
       return db().from('relevamientos')
-        .select('*, modulo_visita(*), modulo_vivienda(*), modulo_sistemas(*), pacientes(*)')
+        .select('*, rondas(*), modulo_visita(*), modulo_vivienda(*), modulo_sistemas(*), pacientes(*)')
         .eq('id', relevamientoId)
         .single();
     },

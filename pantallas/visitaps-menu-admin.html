@@ -2,44 +2,14 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=390, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>VisitAPS – Menú Administrador</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --navy:      #1B2A4A;
-    --navy-light:#243660;
-    --gold:      #C9A84C;
-    --gold-light:#D9BC72;
-    --cream:     #EDEAE4;
-    --cream-dark:#DDD9D2;
-    --steel:     #5A7290;
-    --text-main: #2C2C2C;
-    --text-soft: #7A7672;
-  }
-
-  html, body {
-    width: 100%; height: 100dvh;
-    margin: 0 auto;
-    background: #C8C4BC;
-    font-family: 'Montserrat', sans-serif;
-    display: flex; justify-content: center;
-  }
-
-  .phone {
-    width: 100%; max-width: 390px;
-    height: 100dvh;
-    background: var(--cream);
-    display: flex; flex-direction: column;
-    align-items: center;
-    position: relative; overflow: hidden;
-  }
 
   .top-bar {
     width: 100%; height: 4px; flex-shrink: 0;
-    background: linear-gradient(90deg, #1B2A4A 0%, #C9A84C 50%, #1B2A4A 100%);
+    background: var(--gold);
   }
 
   /* Top nav */
@@ -108,12 +78,12 @@
     animation: fadeIn 0.5s 0.2s ease both;
   }
   .role-badge.supervisor {
-    border: 1px solid #50b7b2;
-    color: #2a9490;
+    background: var(--badge-teal-bg);
+    color: var(--badge-teal-text);
   }
   .role-badge.admin {
-    border: 1px solid #D9BC72;
-    color: #C9A84C;
+    background: var(--badge-gold-bg);
+    color: var(--badge-gold-text);
   }
 
   /* Buttons */
@@ -190,7 +160,6 @@
 </style>
 </head>
 <body>
-<div class="phone">
   <div class="top-bar"></div>
 
   <!-- Nav icons -->
@@ -374,6 +343,5 @@
     <span class="version">Versión: v1.5.9</span>
   </div>
 
-</div>
 </body>
 </html>
